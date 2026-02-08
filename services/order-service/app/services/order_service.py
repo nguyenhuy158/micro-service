@@ -1,25 +1,26 @@
 import uuid
 from uuid import UUID
-from typing import List, Optional
+
+from app.models.order import Order, OrderItem
+from app.schemas.order import OrderCreate
+from app.services.internal_client import InternalServiceClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from app.models.order import Order, OrderItem
-from app.schemas.order import OrderCreate, OrderUpdate
-from app.services.internal_client import InternalServiceClient
+
 from shared.enums.status import OrderStatus
 
 
 class OrderService:
     @staticmethod
-    async def get_order(db: AsyncSession, order_id: UUID) -> Optional[Order]:
+    async def get_order(db: AsyncSession, order_id: UUID) -> Order | None:
         result = await db.execute(
             select(Order).where(Order.id == order_id).options(selectinload(Order.items))
         )
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def get_user_orders(db: AsyncSession, user_id: UUID) -> List[Order]:
+    async def get_user_orders(db: AsyncSession, user_id: UUID) -> list[Order]:
         result = await db.execute(
             select(Order)
             .where(Order.user_id == user_id)
@@ -105,7 +106,7 @@ class OrderService:
     @staticmethod
     async def update_order_status(
         db: AsyncSession, order_id: UUID, status: OrderStatus
-    ) -> Optional[Order]:
+    ) -> Order | None:
         db_order = await OrderService.get_order(db, order_id)
         if db_order:
             db_order.status = status

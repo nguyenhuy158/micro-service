@@ -1,16 +1,20 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
+from typing import Optional
+
+from sqlalchemy import Boolean, Enum, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
 from app.db.base import Base
 from shared.enums.status import UserRole
 
 
 class User(Base):
-    __tablename__ = "users"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    full_name = Column(String, index=True)
-    is_active = Column(Boolean, default=True)
-    role = Column(Enum(UserRole), default=UserRole.CUSTOMER)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    full_name: Mapped[Optional[str]] = mapped_column(String, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.CUSTOMER)

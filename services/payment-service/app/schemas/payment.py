@@ -1,6 +1,7 @@
 from uuid import UUID
-from typing import Optional
+
 from pydantic import BaseModel, Field
+
 from shared.enums.status import PaymentStatus
 
 
@@ -14,7 +15,7 @@ class PaymentResponse(BaseModel):
     order_id: UUID
     amount: float
     status: PaymentStatus
-    transaction_id: Optional[str] = None
+    transaction_id: str | None = None
 
     class Config:
         from_attributes = True

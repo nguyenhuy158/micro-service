@@ -1,5 +1,6 @@
-import httpx
 from uuid import UUID
+
+import httpx
 from app.core.config import settings
 
 
@@ -42,7 +43,8 @@ class InternalServiceClient:
                 )
                 return response.status_code == 200
             except Exception:
-                # If payment service is not yet ready, we might want to return True for testing
-                # but for core logic we should probably return False.
-                # However, during development of Order logic, we might need a way to bypass.
+                # If payment service is not yet ready, we might want to return True
+                # for testing but for core logic we should probably return False.
+                # However, during development of Order logic, we might need a way
+                # to bypass.
                 return False

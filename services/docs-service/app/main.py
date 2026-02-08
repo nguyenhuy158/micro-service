@@ -1,4 +1,5 @@
 import httpx
+from typing import Any
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
@@ -16,12 +17,12 @@ SERVICES = {
 
 
 @app.get("/health")
-async def health():
+async def health() -> Any:
     return {"status": "ok", "service": "docs-service"}
 
 
 @app.get("/openapi.json")
-async def get_unified_openapi():
+async def get_unified_openapi() -> Any:
     # Base schema
     unified_schema = get_openapi(
         title="Unified E-commerce API",

@@ -1,7 +1,8 @@
 import os
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock, MagicMock
 
 # Set environment variables for testing
 os.environ["DATABASE_URL"] = "postgresql+asyncpg://user:password@localhost/test_db"
@@ -9,9 +10,9 @@ os.environ["RABBITMQ_URL"] = "amqp://guest:guest@localhost/"
 os.environ["MEILISEARCH_URL"] = "http://localhost:7700"
 os.environ["MEILISEARCH_KEY"] = "test_key"
 
-from app.main import app
 from app.db.session import get_db
-from httpx import AsyncClient, ASGITransport
+from app.main import app
+from httpx import ASGITransport, AsyncClient
 
 
 @pytest.fixture

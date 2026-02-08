@@ -1,8 +1,9 @@
-import pytest
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
-from unittest.mock import MagicMock, AsyncMock, patch
-from app.models.user import User
+
+import pytest
 from app.api import deps
+from app.models.user import User
 
 
 @pytest.mark.asyncio

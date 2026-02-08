@@ -1,17 +1,17 @@
 import uuid
 from uuid import UUID
-from typing import List, Optional
+
+from app.models.inventory import Inventory
+from app.schemas.inventory import InventoryCreate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.inventory import Inventory
-from app.schemas.inventory import InventoryCreate, InventoryUpdate
 
 
 class InventoryService:
     @staticmethod
     async def get_inventory_by_product(
         db: AsyncSession, product_id: UUID
-    ) -> Optional[Inventory]:
+    ) -> Inventory | None:
         result = await db.execute(
             select(Inventory).where(Inventory.product_id == product_id)
         )
@@ -34,7 +34,7 @@ class InventoryService:
     @staticmethod
     async def update_stock(
         db: AsyncSession, product_id: UUID, quantity: int
-    ) -> Optional[Inventory]:
+    ) -> Inventory | None:
         db_inventory = await InventoryService.get_inventory_by_product(db, product_id)
         if db_inventory:
             db_inventory.quantity = quantity

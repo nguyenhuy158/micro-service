@@ -1,7 +1,8 @@
 import uuid
-import pytest
 from unittest.mock import AsyncMock, patch
-from app.models.order import Order
+
+import pytest
+
 from shared.enums.status import OrderStatus
 
 

@@ -1,8 +1,9 @@
 from typing import Any
-from fastapi import APIRouter, Depends
+
 from app.api import deps
-from app.schemas.user import UserResponse
 from app.models.user import User
+from app.schemas.user import UserResponse
+from fastapi import APIRouter, Depends
 
 router = APIRouter()
 

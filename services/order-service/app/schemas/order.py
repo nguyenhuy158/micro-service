@@ -1,6 +1,7 @@
 from uuid import UUID
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
+
 from shared.enums.status import OrderStatus
 
 
@@ -23,22 +24,22 @@ class OrderItemResponse(OrderItemBase):
 
 class OrderBase(BaseModel):
     user_id: UUID
-    shipping_address: Optional[str] = None
+    shipping_address: str | None = None
 
 
 class OrderCreate(OrderBase):
-    items: List[OrderItemCreate]
+    items: list[OrderItemCreate]
 
 
 class OrderUpdate(BaseModel):
-    status: Optional[OrderStatus] = None
+    status: OrderStatus | None = None
 
 
 class OrderResponse(OrderBase):
     id: UUID
     total_amount: float
     status: OrderStatus
-    items: List[OrderItemResponse]
+    items: list[OrderItemResponse]
 
     class Config:
         from_attributes = True

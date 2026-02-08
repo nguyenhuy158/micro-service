@@ -1,15 +1,16 @@
-from typing import Optional
 from uuid import UUID
+
 from pydantic import BaseModel, EmailStr
+
 from shared.enums.status import UserRole
 
 
 # Shared properties
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None
-    is_active: Optional[bool] = True
-    full_name: Optional[str] = None
-    role: Optional[UserRole] = UserRole.CUSTOMER
+    email: EmailStr | None = None
+    is_active: bool | None = True
+    full_name: str | None = None
+    role: UserRole | None = UserRole.CUSTOMER
 
 
 # Properties to receive via API on creation
@@ -20,11 +21,11 @@ class UserCreate(UserBase):
 
 # Properties to receive via API on update
 class UserUpdate(UserBase):
-    password: Optional[str] = None
+    password: str | None = None
 
 
 class UserInDBBase(UserBase):
-    id: Optional[UUID] = None
+    id: UUID | None = None
 
     class Config:
         from_attributes = True
@@ -42,5 +43,5 @@ class Token(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: Optional[str] = None
-    role: Optional[str] = None
+    sub: str | None = None
+    role: str | None = None

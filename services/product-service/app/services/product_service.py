@@ -1,10 +1,9 @@
-from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.models.product import Product, Category
-from app.schemas.product import ProductCreate, CategoryCreate
+from app.models.product import Category, Product
+from app.schemas.product import CategoryCreate, ProductCreate
 
 
 class ProductService:
@@ -19,7 +18,7 @@ class ProductService:
 
     async def get_products(
         self, db: AsyncSession, skip: int = 0, limit: int = 100
-    ) -> List[Product]:
+    ) -> list[Product]:
         query = (
             select(Product)
             .options(selectinload(Product.category))
@@ -27,16 +26,16 @@ class ProductService:
             .limit(limit)
         )
         result = await db.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
-    async def get_product(self, db: AsyncSession, product_id: int) -> Optional[Product]:
+    async def get_product(self, db: AsyncSession, product_id: int) -> Product | None:
         query = (
             select(Product)
             .options(selectinload(Product.category))
             .where(Product.id == product_id)
         )
         result = await db.execute(query)
-        return result.scalars().first()
+        return result.scalar_one_or_none()
 
     async def create_category(
         self, db: AsyncSession, category_in: CategoryCreate
@@ -49,10 +48,10 @@ class ProductService:
 
     async def get_categories(
         self, db: AsyncSession, skip: int = 0, limit: int = 100
-    ) -> List[Category]:
+    ) -> list[Category]:
         query = select(Category).offset(skip).limit(limit)
         result = await db.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
 
 product_service = ProductService()

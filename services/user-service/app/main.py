@@ -1,18 +1,18 @@
-from fastapi import FastAPI
-from starlette_prometheus import metrics, PrometheusMiddleware
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
-from app.core.config import settings
+from fastapi import FastAPI
+from starlette_prometheus import PrometheusMiddleware, metrics
+
 from app.api.api import api_router
-from app.db.session import engine
+from app.core.config import settings
 from app.db.base import Base
-
-# Import models to ensure they are registered with Base.metadata
-from app.models import user
+from app.db.session import engine
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup: Create tables (In production, use Alembic!)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -37,10 +37,10 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")
-def health_check():
+def health_check() -> Any:
     return {"status": "ok", "service": "user-service"}
 
 
 @app.get("/")
-def root():
+def root() -> Any:
     return {"message": "Welcome to User Service"}
