@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -10,8 +11,11 @@ async def test_create_product(client, mock_db_session):
     mock_db_session.add = MagicMock()
     mock_db_session.commit = AsyncMock()
 
+    test_id = uuid.uuid4()
+    test_cat_id = uuid.uuid4()
+
     async def mock_refresh(obj):
-        obj.id = 1
+        obj.id = test_id
 
     mock_db_session.refresh = AsyncMock(side_effect=mock_refresh)
 
@@ -20,7 +24,7 @@ async def test_create_product(client, mock_db_session):
         "description": "A test product",
         "price": 10.0,
         "stock": 100,
-        "category_id": 1,
+        "category_id": str(test_cat_id),
     }
 
     response = await client.post("/api/v1/products", json=product_data)
@@ -29,6 +33,7 @@ async def test_create_product(client, mock_db_session):
     data = response.json()
     assert data["name"] == product_data["name"]
     assert data["price"] == product_data["price"]
+    assert data["id"] == str(test_id)
 
     # Verify DB interactions
     mock_db_session.add.assert_called_once()
@@ -39,7 +44,8 @@ async def test_create_product(client, mock_db_session):
 @pytest.mark.asyncio
 async def test_get_products(client, mock_db_session):
     # Setup mock return value
-    mock_product = Product(id=1, name="Test Product", price=10.0, stock=100)
+    test_id = uuid.uuid4()
+    mock_product = Product(id=test_id, name="Test Product", price=10.0, stock=100)
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_product]
     mock_db_session.execute.return_value = mock_result
@@ -50,21 +56,23 @@ async def test_get_products(client, mock_db_session):
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Test Product"
+    assert data[0]["id"] == str(test_id)
 
 
 @pytest.mark.asyncio
 async def test_get_product_found(client, mock_db_session):
     # Setup mock return value
-    mock_product = Product(id=1, name="Test Product", price=10.0, stock=100)
+    test_id = uuid.uuid4()
+    mock_product = Product(id=test_id, name="Test Product", price=10.0, stock=100)
     mock_result = MagicMock()
     mock_result.scalar_one_or_none.return_value = mock_product
     mock_db_session.execute.return_value = mock_result
 
-    response = await client.get("/api/v1/products/1")
+    response = await client.get(f"/api/v1/products/{test_id}")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["id"] == 1
+    assert data["id"] == str(test_id)
     assert data["name"] == "Test Product"
 
 
@@ -75,7 +83,8 @@ async def test_get_product_not_found(client, mock_db_session):
     mock_result.scalar_one_or_none.return_value = None
     mock_db_session.execute.return_value = mock_result
 
-    response = await client.get("/api/v1/products/999")
+    test_id = uuid.uuid4()
+    response = await client.get(f"/api/v1/products/{test_id}")
 
     assert response.status_code == 404
 
@@ -86,8 +95,10 @@ async def test_create_category(client, mock_db_session):
     mock_db_session.add = MagicMock()
     mock_db_session.commit = AsyncMock()
 
+    test_id = uuid.uuid4()
+
     async def mock_refresh(obj):
-        obj.id = 1
+        obj.id = test_id
 
     mock_db_session.refresh = AsyncMock(side_effect=mock_refresh)
 
@@ -98,6 +109,7 @@ async def test_create_category(client, mock_db_session):
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == category_data["name"]
+    assert data["id"] == str(test_id)
 
     # Verify DB interactions
     mock_db_session.add.assert_called_once()
@@ -108,7 +120,8 @@ async def test_create_category(client, mock_db_session):
 @pytest.mark.asyncio
 async def test_get_categories(client, mock_db_session):
     # Setup mock return value
-    mock_category = Category(id=1, name="Test Category")
+    test_id = uuid.uuid4()
+    mock_category = Category(id=test_id, name="Test Category")
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_category]
     mock_db_session.execute.return_value = mock_result
@@ -119,3 +132,4 @@ async def test_get_categories(client, mock_db_session):
     data = response.json()
     assert len(data) == 1
     assert data[0]["name"] == "Test Category"
+    assert data[0]["id"] == str(test_id)

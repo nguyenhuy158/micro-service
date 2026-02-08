@@ -1,3 +1,4 @@
+import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -25,7 +26,7 @@ async def list_products(
 
 
 @router.get("/products/{product_id}", response_model=Product)
-async def get_product(product_id: int, db: AsyncSession = Depends(get_db)) -> Any:
+async def get_product(product_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Any:
     product = await product_service.get_product(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")

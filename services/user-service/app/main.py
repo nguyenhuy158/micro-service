@@ -9,7 +9,8 @@ from starlette_prometheus import PrometheusMiddleware, metrics
 from app.api.api import api_router
 from app.core.config import settings
 from app.db.base import Base
-from app.db.session import engine
+from app.db.init_db import init_db
+from app.db.session import SessionLocal, engine
 
 
 @asynccontextmanager
@@ -17,7 +18,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Startup: Create tables (In production, use Alembic!)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Seed data
+    async with SessionLocal() as db:
+        await init_db(db)
+
     yield
+
     # Shutdown
     await engine.dispose()
 

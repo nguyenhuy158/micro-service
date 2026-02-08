@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -11,7 +13,7 @@ class CategoryCreate(CategoryBase):
 
 
 class Category(CategoryBase):
-    id: int
+    id: uuid.UUID
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -21,7 +23,7 @@ class ProductBase(BaseModel):
     price: float
     stock: int = 0
     image_url: str | None = None
-    category_id: int | None = None
+    category_id: uuid.UUID | None = None
 
 
 class ProductCreate(ProductBase):
@@ -29,6 +31,6 @@ class ProductCreate(ProductBase):
 
 
 class Product(ProductBase):
-    id: int
+    id: uuid.UUID
     category: Category | None = None
     model_config = ConfigDict(from_attributes=True)

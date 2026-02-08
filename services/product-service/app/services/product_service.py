@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -28,7 +30,9 @@ class ProductService:
         result = await db.execute(query)
         return list(result.scalars().all())
 
-    async def get_product(self, db: AsyncSession, product_id: int) -> Product | None:
+    async def get_product(
+        self, db: AsyncSession, product_id: uuid.UUID
+    ) -> Product | None:
         query = (
             select(Product)
             .options(selectinload(Product.category))
