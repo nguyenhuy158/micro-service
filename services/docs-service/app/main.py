@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 
-app = FastAPI(title="Unified E-commerce API", version="1.0.0")
+from shared.version import VERSION
+
+app = FastAPI(title="Unified E-commerce API", version=VERSION)
 
 # Service Map: Service Name -> Internal URL
 SERVICES = {
@@ -27,7 +29,7 @@ async def get_unified_openapi() -> Any:
     # Base schema
     unified_schema = get_openapi(
         title="Unified E-commerce API",
-        version="1.0.0",
+        version=VERSION,
         routes=app.routes,
     )
 

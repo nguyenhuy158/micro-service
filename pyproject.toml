@@ -1,3 +1,12 @@
+[project]
+name = "microservice-ecosystem"
+version = "1.0.0"
+description = "A modular microservice architecture built with FastAPI, Kong Gateway, and RabbitMQ"
+authors = [
+    { name = "Developer", email = "dev@example.com" }
+]
+requires-python = ">=3.11"
+
 [tool.mypy]
 python_version = "3.11"
 check_untyped_defs = true

@@ -29,14 +29,15 @@ const t = (key) => {
 
 document.addEventListener('alpine:init', () => {
     // 1. Initialize I18n
-    const i18nPlugin = window.AlpineI18n;
-    if (i18nPlugin && window.messages) {
-        Alpine.plugin(i18nPlugin);
+    const i18n = window.AlpineI18n;
+    if (i18n && window.messages) {
+        // Note: Alpine.plugin() is NOT needed here because the CDN version 
+        // of alpinejs-i18n registers itself automatically on alpine:initializing.
         const savedLang = JSON.parse(localStorage.getItem('app_lang')) || 'en';
-        i18nPlugin.create(savedLang, window.messages);
+        i18n.create(savedLang, window.messages);
     } else {
         console.error("I18n plugin or messages not loaded! Shimming $t to prevent crash.", {
-            plugin: !!i18nPlugin,
+            plugin: !!i18n,
             messages: !!window.messages
         });
         Alpine.magic('t', () => (key) => key);

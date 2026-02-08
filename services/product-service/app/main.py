@@ -8,7 +8,9 @@ from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
 
-app = FastAPI(title=settings.PROJECT_NAME, openapi_url="/openapi.json")
+app = FastAPI(
+    title=settings.PROJECT_NAME, version=settings.VERSION, openapi_url="/openapi.json"
+)
 
 # CORS
 app.add_middleware(

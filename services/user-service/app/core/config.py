@@ -1,9 +1,12 @@
 from pydantic_settings import BaseSettings
 
+from shared.version import VERSION
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "User Service"
     API_V1_STR: str = "/api/v1"
+    VERSION: str = VERSION
 
     # SECURITY
     SECRET_KEY: str = "your-secret-key-change-me"  # Should be loaded from env

@@ -15,7 +15,21 @@ Do **NOT** submit or finalize your task until all relevant commands pass success
 
 ---
 
-## 1. Build, Test, and Lint Commands
+## 2. Versioning (Semantic Versioning)
+
+The project follows [Semantic Versioning 2.0.0](https://semver.org/).
+
+- **Global Version:** Defined in the root `pyproject.toml` under `[project].version`.
+- **Shared Version:** Defined in `shared/version.py`. This is the source of truth for all services.
+- **Service Versioning:** All microservices import their version from `shared.version.VERSION`.
+- **API Documentation:** The OpenAPI version for each service and the unified documentation always reflects the `VERSION`.
+
+**Updating Version:**
+When making breaking changes, update the Major version. For new features (backwards-compatible), update the Minor version. For bug fixes, update the Patch version.
+
+---
+
+## 3. Build, Test, and Lint Commands
 
 The project uses `make` for common tasks and `pip` (via `requirements.txt`) for dependency management.
 
