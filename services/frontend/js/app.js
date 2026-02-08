@@ -26,35 +26,33 @@ const t = (key) => {
 
 document.addEventListener('alpine:init', () => {
     // 1. Initialize I18n
-    // Ensure messages are loaded from window.messages
     const i18n = window.Alpine.I18n || window.AlpineI18n;
     if (i18n && window.messages) {
         i18n.create(window.messages);
     } else {
         console.error("I18n plugin or messages not loaded! Shimming $t to prevent crash.");
-        // Shim $t magic to return the key if plugin fails
         Alpine.magic('t', () => (key) => key);
     }
 
     // 2. Define Stores
 
-    // UI Store (Theme, Language)
+    // UI Store (Theme, Language, Active Tab)
     Alpine.store('ui', {
         theme: Alpine.$persist('system').as('app_theme'),
         lang: Alpine.$persist('en').as('app_lang'),
+        activeTab: 'products', // products, orders
 
         init() {
             this.applyTheme();
             this.applyLang();
 
-            // Use Alpine.effect to watch changes
             Alpine.effect(() => {
-                this.theme; // Access to track dependency
+                this.theme;
                 this.applyTheme();
             });
 
             Alpine.effect(() => {
-                this.lang; // Access to track dependency
+                this.lang;
                 this.applyLang();
             });
         },
@@ -94,6 +92,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('auth', {
         token: Alpine.$persist('').as('auth_token'),
         user: Alpine.$persist(null).as('auth_user'),
+        view: 'login', // login, register
 
         get isAuthenticated() {
             return !!this.token;
@@ -105,7 +104,7 @@ document.addEventListener('alpine:init', () => {
                 params.append('username', username);
                 params.append('password', password);
 
-                const res = await fetch('http://localhost:8000/api/v1/auth/login', {
+                const res = await fetch('http://localhost:8000/api/v1/user/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: params
@@ -115,11 +114,48 @@ document.addEventListener('alpine:init', () => {
 
                 const data = await res.json();
                 this.token = data.access_token;
-                this.user = { username };
+                
+                // Fetch user info
+                await this.fetchMe();
 
                 toast(t('login_success'), 'success');
             } catch (e) {
                 toast(t('login_failed') + ": " + e.message, 'error');
+            }
+        },
+
+        async register(userData) {
+            try {
+                const res = await fetch('http://localhost:8000/api/v1/user/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.detail || 'Registration failed');
+                }
+
+                toast(t('register_success'), 'success');
+                this.view = 'login';
+            } catch (e) {
+                toast(t('register_failed') + ": " + e.message, 'error');
+            }
+        },
+
+        async fetchMe() {
+            try {
+                const res = await fetch('http://localhost:8000/api/v1/user/users/me', {
+                    headers: { 'Authorization': `Bearer ${this.token}` }
+                });
+                if (res.ok) {
+                    this.user = await res.json();
+                } else {
+                    this.logout();
+                }
+            } catch (e) {
+                console.error("Fetch me error", e);
             }
         },
 
@@ -133,6 +169,7 @@ document.addEventListener('alpine:init', () => {
     // Cart Store
     Alpine.store('cart', {
         items: Alpine.$persist([]).as('cart_items'),
+        loading: false,
 
         get total() {
             return this.items.reduce((acc, item) => acc + item.price, 0);
@@ -143,37 +180,83 @@ document.addEventListener('alpine:init', () => {
             toast(`${t('added_to_cart')}: ${product.name}`, 'success');
         },
 
+        remove(index) {
+            this.items.splice(index, 1);
+        },
+
         clear() {
             this.items = [];
         },
 
-        checkout() {
-             toast(t('checkout_msg'), 'warning');
-             this.clear();
+        async checkout() {
+            this.loading = true;
+            try {
+                const auth = Alpine.store('auth');
+                if (!auth || !auth.token || !auth.user) throw new Error('Not authenticated');
+
+                const orderData = {
+                    user_id: auth.user.id,
+                    items: this.items.map(item => ({
+                        product_id: item.id,
+                        quantity: 1,
+                        price: item.price
+                    })),
+                    total_amount: this.total
+                };
+
+                const res = await fetch('http://localhost:8000/api/v1/order/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${auth.token}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.detail || 'Checkout failed');
+                }
+
+                toast(t('checkout_success'), 'success');
+                this.clear();
+                // Switch to orders tab
+                Alpine.store('ui').activeTab = 'orders';
+            } catch (e) {
+                toast(t('checkout_failed') + ": " + e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
         }
     });
 
     // Products Data Component
     Alpine.data('products', () => ({
         list: [],
+        filteredList: [],
+        search: '',
         loading: false,
 
         async init() {
-            // Apply AutoAnimate if available
             if (window.autoAnimate && this.$refs.productList) {
                 window.autoAnimate(this.$refs.productList);
             }
 
-            // Access store safely
             const auth = Alpine.store('auth');
             if (auth && auth.isAuthenticated) {
                 await this.fetch();
             }
 
-            // Watch auth token for changes
             this.$watch('$store.auth.token', (val) => {
                 if (val) this.fetch();
-                else this.list = [];
+                else {
+                    this.list = [];
+                    this.filteredList = [];
+                }
+            });
+
+            this.$watch('search', () => {
+                this.filter();
             });
         },
 
@@ -183,23 +266,81 @@ document.addEventListener('alpine:init', () => {
                 const auth = Alpine.store('auth');
                 if (!auth || !auth.token) return;
 
-                const res = await fetch('http://localhost:8000/api/v1/products', {
-                    headers: {
-                        'Authorization': `Bearer ${auth.token}`
-                    }
+                const res = await fetch('http://localhost:8000/api/v1/product/products/', {
+                    headers: { 'Authorization': `Bearer ${auth.token}` }
                 });
 
                 if (res.ok) {
                     this.list = await res.json();
+                    this.filter();
                 } else if (res.status === 401) {
                     auth.logout();
                 }
             } catch (e) {
-                console.error("Fetch error", e);
-                toast(t('no_products'), 'error');
+                console.error("Fetch products error", e);
             } finally {
                 this.loading = false;
             }
+        },
+
+        filter() {
+            if (!this.search) {
+                this.filteredList = this.list;
+                return;
+            }
+            const q = this.search.toLowerCase();
+            this.filteredList = this.list.filter(p => 
+                p.name.toLowerCase().includes(q) || 
+                p.description.toLowerCase().includes(q)
+            );
+        }
+    }));
+
+    // Orders Data Component
+    Alpine.data('orders', () => ({
+        list: [],
+        loading: false,
+
+        async init() {
+            this.$watch('$store.ui.activeTab', (val) => {
+                if (val === 'orders') this.fetch();
+            });
+        },
+
+        async fetch() {
+            this.loading = true;
+            try {
+                const auth = Alpine.store('auth');
+                if (!auth || !auth.token || !auth.user) return;
+
+                const res = await fetch(`http://localhost:8000/api/v1/order/orders/user/${auth.user.id}`, {
+                    headers: { 'Authorization': `Bearer ${auth.token}` }
+                });
+
+                if (res.ok) {
+                    this.list = await res.json();
+                }
+            } catch (e) {
+                console.error("Fetch orders error", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        formatDate(dateStr) {
+            return dayjs(dateStr).format('YYYY-MM-DD HH:mm');
+        },
+
+        getStatusColor(status) {
+            const colors = {
+                'PENDING': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                'PAID': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                'SHIPPED': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+                'DELIVERED': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                'CANCELLED': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                'FAILED': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
         }
     }));
 });
