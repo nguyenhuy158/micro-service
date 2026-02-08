@@ -15,11 +15,21 @@ const toast = (text, type = 'info') => {
     }).showToast();
 };
 
+// Global Translation Helper
+const t = (key) => {
+    const i18n = window.Alpine?.I18n || window.AlpineI18n;
+    if (i18n && typeof i18n.t === 'function') {
+        return i18n.t(key);
+    }
+    return key;
+};
+
 document.addEventListener('alpine:init', () => {
     // 1. Initialize I18n
     // Ensure messages are loaded from window.messages
-    if (window.Alpine.I18n && window.messages) {
-        window.Alpine.I18n.create(window.messages);
+    const i18n = window.Alpine.I18n || window.AlpineI18n;
+    if (i18n && window.messages) {
+        i18n.create(window.messages);
     } else {
         console.error("I18n plugin or messages not loaded! Shimming $t to prevent crash.");
         // Shim $t magic to return the key if plugin fails
@@ -27,7 +37,7 @@ document.addEventListener('alpine:init', () => {
     }
 
     // 2. Define Stores
-    
+
     // UI Store (Theme, Language)
     Alpine.store('ui', {
         theme: Alpine.$persist('system').as('app_theme'),
@@ -36,13 +46,13 @@ document.addEventListener('alpine:init', () => {
         init() {
             this.applyTheme();
             this.applyLang();
-            
+
             // Use Alpine.effect to watch changes
             Alpine.effect(() => {
                 this.theme; // Access to track dependency
                 this.applyTheme();
             });
-            
+
             Alpine.effect(() => {
                 this.lang; // Access to track dependency
                 this.applyLang();
@@ -60,9 +70,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         applyTheme() {
-            const isDark = this.theme === 'dark' || 
+            const isDark = this.theme === 'dark' ||
                 (this.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            
+
             if (isDark) {
                 document.documentElement.classList.add('dark');
             } else {
@@ -84,7 +94,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('auth', {
         token: Alpine.$persist('').as('auth_token'),
         user: Alpine.$persist(null).as('auth_user'),
-        
+
         get isAuthenticated() {
             return !!this.token;
         },
@@ -95,7 +105,7 @@ document.addEventListener('alpine:init', () => {
                 params.append('username', username);
                 params.append('password', password);
 
-                const res = await fetch('http://localhost:8000/api/v1/login/access-token', {
+                const res = await fetch('http://localhost:8000/api/v1/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: params
@@ -105,22 +115,18 @@ document.addEventListener('alpine:init', () => {
 
                 const data = await res.json();
                 this.token = data.access_token;
-                this.user = { username }; 
-                
-                // Use safe helper
-                const msg = window.Alpine.I18n ? window.Alpine.I18n.t('login_success') : 'Login successful';
-                toast(msg, 'success');
+                this.user = { username };
+
+                toast(t('login_success'), 'success');
             } catch (e) {
-                const msg = window.Alpine.I18n ? window.Alpine.I18n.t('login_failed') : 'Login failed';
-                toast(msg + ": " + e.message, 'error');
+                toast(t('login_failed') + ": " + e.message, 'error');
             }
         },
 
         logout() {
             this.token = '';
             this.user = null;
-            const msg = window.Alpine.I18n ? window.Alpine.I18n.t('logged_out') : 'Logged out';
-            toast(msg, 'info');
+            toast(t('logged_out'), 'info');
         }
     });
 
@@ -134,17 +140,15 @@ document.addEventListener('alpine:init', () => {
 
         add(product) {
             this.items.push(product);
-            const addedMsg = window.Alpine.I18n ? window.Alpine.I18n.t('added_to_cart') : 'Added to cart';
-            toast(`${addedMsg}: ${product.name}`, 'success');
+            toast(`${t('added_to_cart')}: ${product.name}`, 'success');
         },
 
         clear() {
             this.items = [];
         },
-        
+
         checkout() {
-             const msg = window.Alpine.I18n ? window.Alpine.I18n.t('checkout_msg') : 'Checkout not implemented';
-             toast(msg, 'warning');
+             toast(t('checkout_msg'), 'warning');
              this.clear();
         }
     });
@@ -180,11 +184,11 @@ document.addEventListener('alpine:init', () => {
                 if (!auth || !auth.token) return;
 
                 const res = await fetch('http://localhost:8000/api/v1/products', {
-                    headers: { 
-                        'Authorization': `Bearer ${auth.token}` 
+                    headers: {
+                        'Authorization': `Bearer ${auth.token}`
                     }
                 });
-                
+
                 if (res.ok) {
                     this.list = await res.json();
                 } else if (res.status === 401) {
@@ -192,8 +196,7 @@ document.addEventListener('alpine:init', () => {
                 }
             } catch (e) {
                 console.error("Fetch error", e);
-                const msg = window.Alpine.I18n ? window.Alpine.I18n.t('no_products') : 'No products found';
-                toast(msg, 'error');
+                toast(t('no_products'), 'error');
             } finally {
                 this.loading = false;
             }
