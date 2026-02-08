@@ -167,7 +167,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./services/user-service/app:/app/app
-      - ./shared/app:/app/shared
+      - ./shared:/app/shared
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_USER}:${POSTGRES_PASSWORD_USER}@user-db/${POSTGRES_DB_USER}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
@@ -266,6 +266,8 @@ services:
       dockerfile: Dockerfile
     container_name: docs-service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/docs-service/app:/app/app
     ports:
       - "8002:8000"
     networks:
