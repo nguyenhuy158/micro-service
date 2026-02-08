@@ -7,7 +7,7 @@ A modular microservice architecture built with FastAPI, Kong Gateway, and Rabbit
 ```mermaid
 graph TD
     Client[Client] -->|HTTP:8000| Kong[Kong API Gateway]
-    
+
     subgraph "Microservices (FastAPI)"
         Kong --> US[User Service]
         Kong --> PS[Product Service]
@@ -41,7 +41,7 @@ graph TD
     OS -->|Internal API| PS
     OS --- Redis
     PS --- Meilisearch
-    
+
     US & PS & OS & IS & PY --- RabbitMQ
     US & PS & OS & IS & PY --- Prometheus
     US & PS & OS & IS & PY --- Jaeger
