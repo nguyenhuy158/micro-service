@@ -31,6 +31,11 @@ class Product(Base):
     stock: Mapped[int] = mapped_column(Integer, default=0)
     image_url: Mapped[str | None] = mapped_column(String)
 
+    # API Specific Fields
+    api_url: Mapped[str | None] = mapped_column(String)
+    quota_limit: Mapped[int] = mapped_column(Integer, default=1000)
+    rate_limit: Mapped[int] = mapped_column(Integer, default=60)  # requests per minute
+
     category_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True
     )

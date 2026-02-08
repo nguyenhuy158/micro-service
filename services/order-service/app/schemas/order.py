@@ -3,6 +3,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from shared.enums.status import OrderStatus
+from shared.schemas.api_key import ApiKeyResponse
 
 
 class OrderItemBase(BaseModel):
@@ -40,6 +41,7 @@ class OrderResponse(OrderBase):
     total_amount: float
     status: OrderStatus
     items: list[OrderItemResponse]
+    api_keys: list[ApiKeyResponse] = []
 
     class Config:
         from_attributes = True

@@ -25,6 +25,9 @@ async def test_create_product(client, mock_db_session):
         "price": 10.0,
         "stock": 100,
         "category_id": str(test_cat_id),
+        "api_url": "http://test.com",
+        "quota_limit": 1000,
+        "rate_limit": 60,
     }
 
     response = await client.post("/api/v1/products", json=product_data)
@@ -45,7 +48,14 @@ async def test_create_product(client, mock_db_session):
 async def test_get_products(client, mock_db_session):
     # Setup mock return value
     test_id = uuid.uuid4()
-    mock_product = Product(id=test_id, name="Test Product", price=10.0, stock=100)
+    mock_product = Product(
+        id=test_id,
+        name="Test Product",
+        price=10.0,
+        stock=100,
+        quota_limit=1000,
+        rate_limit=60,
+    )
     mock_result = MagicMock()
     mock_result.scalars.return_value.all.return_value = [mock_product]
     mock_db_session.execute.return_value = mock_result
@@ -63,7 +73,14 @@ async def test_get_products(client, mock_db_session):
 async def test_get_product_found(client, mock_db_session):
     # Setup mock return value
     test_id = uuid.uuid4()
-    mock_product = Product(id=test_id, name="Test Product", price=10.0, stock=100)
+    mock_product = Product(
+        id=test_id,
+        name="Test Product",
+        price=10.0,
+        stock=100,
+        quota_limit=1000,
+        rate_limit=60,
+    )
     mock_result = MagicMock()
     mock_result.scalar_one_or_none.return_value = mock_product
     mock_db_session.execute.return_value = mock_result

@@ -1,7 +1,7 @@
 import uuid
 from uuid import UUID
 
-from app.models.inventory import Inventory
+from app.models.inventory import ApiKey, Inventory
 from app.schemas.inventory import InventoryCreate
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,3 +80,39 @@ class InventoryService:
             await db.commit()
             return True
         return False
+
+    @staticmethod
+    async def get_api_keys_by_order(db: AsyncSession, order_id: UUID) -> list[ApiKey]:
+        result = await db.execute(select(ApiKey).where(ApiKey.order_id == order_id))
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_api_keys_by_user(db: AsyncSession, user_id: UUID) -> list[ApiKey]:
+        result = await db.execute(select(ApiKey).where(ApiKey.user_id == user_id))
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def generate_api_key(
+        db: AsyncSession,
+        user_id: UUID,
+        product_id: UUID,
+        order_id: UUID,
+        quota_limit: int,
+    ) -> ApiKey:
+        import secrets
+
+        api_key = f"sk_{secrets.token_urlsafe(32)}"
+        db_key = ApiKey(
+            id=uuid.uuid4(),
+            user_id=user_id,
+            product_id=product_id,
+            order_id=order_id,
+            key=api_key,
+            quota_limit=quota_limit,
+            quota_used=0,
+            is_active=True,
+        )
+        db.add(db_key)
+        await db.commit()
+        await db.refresh(db_key)
+        return db_key

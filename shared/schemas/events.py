@@ -13,6 +13,15 @@ class OrderItem(BaseModel):
     price: float
 
 
+class ApiKeyPayload(BaseModel):
+    order_id: UUID
+    user_id: UUID
+    product_id: UUID
+    api_key: str
+    quota: int
+    rate_limit: int
+
+
 class OrderPayload(BaseModel):
     order_id: UUID
     user_id: UUID
@@ -55,3 +64,8 @@ class OrderCompletedEvent(DomainEvent):
 class OrderCancelledEvent(DomainEvent):
     event_type: str = "OrderCancelled"
     payload: dict[str, Any]  # { "order_id": ..., "reason": ... }
+
+
+class ApiKeyGeneratedEvent(DomainEvent):
+    event_type: str = "ApiKeyGenerated"
+    payload: ApiKeyPayload

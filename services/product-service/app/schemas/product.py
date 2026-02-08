@@ -25,6 +25,11 @@ class ProductBase(BaseModel):
     image_url: str | None = None
     category_id: uuid.UUID | None = None
 
+    # API Specific Fields
+    api_url: str | None = None
+    quota_limit: int = 1000
+    rate_limit: int = 60
+
 
 class ProductCreate(ProductBase):
     pass
