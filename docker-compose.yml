@@ -152,7 +152,7 @@ services:
     image: grafana/grafana:10.0.3
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     networks:
       - microservice-net
 
