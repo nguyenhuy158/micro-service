@@ -1,12 +1,13 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid4
+
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional
 
 
 class DomainEvent(BaseModel):
     event_id: UUID = Field(default_factory=uuid4)
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     event_type: str
     payload: Any
-    correlation_id: Optional[UUID] = None  # To track the saga
+    correlation_id: UUID | None = None  # To track the saga
