@@ -36,6 +36,10 @@ class UserResponse(UserInDBBase):
     pass
 
 
+class GoogleLogin(BaseModel):
+    id_token: str
+
+
 # Token Schemas
 class Token(BaseModel):
     access_token: str

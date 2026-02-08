@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     # RABBITMQ
     RABBITMQ_URL: str
 
+    # GOOGLE OAUTH
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+
     class Config:
         case_sensitive = True
 
