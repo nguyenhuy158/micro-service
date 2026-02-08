@@ -82,8 +82,9 @@ document.addEventListener('alpine:init', () => {
         },
 
         applyLang() {
-            if (window.Alpine.I18n) {
-                window.Alpine.I18n.locale = this.lang;
+            const i18n = window.Alpine?.I18n || window.AlpineI18n;
+            if (i18n) {
+                i18n.locale = this.lang;
             }
             if (window.dayjs) {
                 window.dayjs.locale(this.lang);
