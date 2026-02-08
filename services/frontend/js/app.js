@@ -98,6 +98,9 @@ document.addEventListener('alpine:init', () => {
         view: 'login', // login, register
 
         init() {
+            // Check for token in URL hash (Redirect Mode Callback)
+            this.handleHashToken();
+
             // Watch for view changes to render Google button
             Alpine.effect(() => {
                 if (!this.isAuthenticated && this.view === 'login') {
@@ -107,14 +110,28 @@ document.addEventListener('alpine:init', () => {
             });
         },
 
+        handleHashToken() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#token=')) {
+                const token = hash.split('=')[1];
+                if (token) {
+                    this.token = token;
+                    // Clear hash without refreshing
+                    window.history.replaceState(null, null, window.location.pathname);
+                    this.fetchMe().then(() => {
+                        toast(t('login_success'), 'success');
+                    });
+                }
+            }
+        },
+
         initGoogleAuth() {
             if (typeof google === 'undefined') return;
 
             google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
-                callback: (response) => {
-                    this.loginWithGoogle(response.credential);
-                }
+                ux_mode: 'redirect',
+                login_uri: `${API_BASE_URL}/api/v1/user/auth/login/google/callback`,
             });
 
             const btnParent = document.getElementById('google-login-btn');

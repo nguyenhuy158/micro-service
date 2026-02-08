@@ -13,7 +13,8 @@ from app.services.user_service import (
     get_user_by_email,
     get_user_by_google_id,
 )
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -97,11 +98,6 @@ async def login_google(
                 db, email=email, google_id=google_id, full_name=name
             )
 
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
-        )
-
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": security.create_access_token(
@@ -109,3 +105,49 @@ async def login_google(
         ),
         "token_type": "bearer",
     }
+
+
+@router.post("/login/google/callback")
+async def login_google_callback(
+    *,
+    db: AsyncSession = Depends(get_db),
+    credential: str = Form(...),
+) -> Any:
+    """
+    Login with Google (Redirect Mode Callback)
+    """
+    google_data = await verify_google_token(credential)
+    google_id = google_data["sub"]
+    email = google_data["email"]
+    name = google_data.get("name")
+
+    # Check if user exists by google_id
+    user = await get_user_by_google_id(db, google_id=google_id)
+    if not user:
+        # Check if user exists by email
+        user = await get_user_by_email(db, email=email)
+        if user:
+            # Link google_id to existing user
+            user.google_id = google_id
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+        else:
+            # Create new user
+            user = await create_user_google(
+                db, email=email, google_id=google_id, full_name=name
+            )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
+        )
+
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = security.create_access_token(user.email, expires_delta=access_token_expires)
+
+    # Redirect back to frontend with the token in the hash fragment
+    # This prevents the token from being sent to the server in subsequent requests
+    # but allows the frontend JS to read it.
+    frontend_url = "http://localhost:3002"
+    return RedirectResponse(url=f"{frontend_url}/#token={token}", status_code=303)
