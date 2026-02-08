@@ -185,7 +185,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./services/product-service/app:/app/app
-      - ./shared/app:/app/shared
+      - ./shared:/app/shared
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_PRODUCT}:${POSTGRES_PASSWORD_PRODUCT}@product-db/${POSTGRES_DB_PRODUCT}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
@@ -206,7 +206,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./services/order-service/app:/app/app
-      - ./shared/app:/app/shared
+      - ./shared:/app/shared
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_ORDER}:${POSTGRES_PASSWORD_ORDER}@order-db/${POSTGRES_DB_ORDER}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
@@ -229,7 +229,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./services/inventory-service/app:/app/app
-      - ./shared/app:/app/shared
+      - ./shared:/app/shared
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_INVENTORY}:${POSTGRES_PASSWORD_INVENTORY}@inventory-db/${POSTGRES_DB_INVENTORY}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
@@ -247,7 +247,7 @@ services:
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
       - ./services/payment-service/app:/app/app
-      - ./shared/app:/app/shared
+      - ./shared:/app/shared
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_PAYMENT}:${POSTGRES_PASSWORD_PAYMENT}@payment-db/${POSTGRES_DB_PAYMENT}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
