@@ -123,3 +123,37 @@ docker-compose up -d --build
 # - Jaeger: http://localhost:16686
 # - Prometheus: http://localhost:9090
 ```
+
+## 💻 Development
+
+### Setup
+
+Install development dependencies:
+
+```bash
+make install-dev
+```
+
+### Type Checking
+
+Run static type checking with `mypy`:
+
+```bash
+make type-check
+```
+
+### Linting
+
+Run linting with `ruff`:
+
+```bash
+make lint
+```
+
+### Formatting
+
+Format code with `ruff`:
+
+```bash
+make format
+```

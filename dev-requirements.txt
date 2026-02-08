@@ -1,0 +1,7 @@
+mypy==1.8.0
+ruff==0.1.9
+types-python-jose
+types-passlib
+types-requests
+sqlalchemy[mypy]
+types-pika
