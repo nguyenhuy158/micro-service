@@ -36,6 +36,9 @@ Agents MUST automatically suggest the next version number and apply it using the
 - `make minor`: Bumps the minor version (e.g., 1.0.0 -> 1.1.0)
 - `make major`: Bumps the major version (e.g., 1.0.0 -> 2.0.0)
 
+**GitHub Automation:**
+When changes are pushed to `main` and the version in `shared/version.py` has been updated, a GitHub Action will automatically create and push a corresponding git tag (e.g., `v1.0.1`).
+
 Alternatively, manually update `shared/version.py` and run `make format` to sync or use the script directly.
 
 ---
