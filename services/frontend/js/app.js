@@ -21,7 +21,9 @@ document.addEventListener('alpine:init', () => {
     if (window.Alpine.I18n && window.messages) {
         window.Alpine.I18n.create(window.messages);
     } else {
-        console.error("I18n plugin or messages not loaded!");
+        console.error("I18n plugin or messages not loaded! Shimming $t to prevent crash.");
+        // Shim $t magic to return the key if plugin fails
+        Alpine.magic('t', () => (key) => key);
     }
 
     // 2. Define Stores
@@ -35,9 +37,14 @@ document.addEventListener('alpine:init', () => {
             this.applyTheme();
             this.applyLang();
             
-            // Watchers
-            this.$watch('theme', () => this.applyTheme());
-            this.$watch('lang', (val) => {
+            // Use Alpine.effect to watch changes
+            Alpine.effect(() => {
+                this.theme; // Access to track dependency
+                this.applyTheme();
+            });
+            
+            Alpine.effect(() => {
+                this.lang; // Access to track dependency
                 this.applyLang();
             });
         },
@@ -100,16 +107,20 @@ document.addEventListener('alpine:init', () => {
                 this.token = data.access_token;
                 this.user = { username }; 
                 
-                toast(window.Alpine.I18n.t('login_success'), 'success');
+                // Use safe helper
+                const msg = window.Alpine.I18n ? window.Alpine.I18n.t('login_success') : 'Login successful';
+                toast(msg, 'success');
             } catch (e) {
-                toast(window.Alpine.I18n.t('login_failed') + ": " + e.message, 'error');
+                const msg = window.Alpine.I18n ? window.Alpine.I18n.t('login_failed') : 'Login failed';
+                toast(msg + ": " + e.message, 'error');
             }
         },
 
         logout() {
             this.token = '';
             this.user = null;
-            toast(window.Alpine.I18n.t('logged_out'), 'info');
+            const msg = window.Alpine.I18n ? window.Alpine.I18n.t('logged_out') : 'Logged out';
+            toast(msg, 'info');
         }
     });
 
@@ -123,7 +134,8 @@ document.addEventListener('alpine:init', () => {
 
         add(product) {
             this.items.push(product);
-            toast(`${window.Alpine.I18n.t('added_to_cart')}: ${product.name}`, 'success');
+            const addedMsg = window.Alpine.I18n ? window.Alpine.I18n.t('added_to_cart') : 'Added to cart';
+            toast(`${addedMsg}: ${product.name}`, 'success');
         },
 
         clear() {
@@ -131,7 +143,8 @@ document.addEventListener('alpine:init', () => {
         },
         
         checkout() {
-             toast(window.Alpine.I18n.t('checkout_msg'), 'warning');
+             const msg = window.Alpine.I18n ? window.Alpine.I18n.t('checkout_msg') : 'Checkout not implemented';
+             toast(msg, 'warning');
              this.clear();
         }
     });
@@ -142,20 +155,18 @@ document.addEventListener('alpine:init', () => {
         loading: false,
 
         async init() {
-            // Apply AutoAnimate if available globally
-            // Note: autoAnimate (formkit) might not be globally exposed via simple script tag easily without a shim,
-            // but if window.autoAnimate exists (from some CDNs), use it.
-            // For now, removing explicit autoAnimate call to fix module error unless we confirm the global.
-            // If the user insists on AutoAnimate, we'd need a proper import map or global build.
-            // Assuming for now we skip or check existence to avoid crash.
+            // Apply AutoAnimate if available
             if (window.autoAnimate && this.$refs.productList) {
                 window.autoAnimate(this.$refs.productList);
             }
 
-            if (Alpine.store('auth').isAuthenticated) {
+            // Access store safely
+            const auth = Alpine.store('auth');
+            if (auth && auth.isAuthenticated) {
                 await this.fetch();
             }
 
+            // Watch auth token for changes
             this.$watch('$store.auth.token', (val) => {
                 if (val) this.fetch();
                 else this.list = [];
@@ -165,19 +176,24 @@ document.addEventListener('alpine:init', () => {
         async fetch() {
             this.loading = true;
             try {
+                const auth = Alpine.store('auth');
+                if (!auth || !auth.token) return;
+
                 const res = await fetch('http://localhost:8000/api/v1/products', {
                     headers: { 
-                        'Authorization': `Bearer ${Alpine.store('auth').token}` 
+                        'Authorization': `Bearer ${auth.token}` 
                     }
                 });
+                
                 if (res.ok) {
                     this.list = await res.json();
                 } else if (res.status === 401) {
-                    Alpine.store('auth').logout();
+                    auth.logout();
                 }
             } catch (e) {
                 console.error("Fetch error", e);
-                toast(window.Alpine.I18n.t('no_products'), 'error');
+                const msg = window.Alpine.I18n ? window.Alpine.I18n.t('no_products') : 'No products found';
+                toast(msg, 'error');
             } finally {
                 this.loading = false;
             }

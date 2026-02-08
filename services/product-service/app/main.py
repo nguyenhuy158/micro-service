@@ -1,23 +1,34 @@
 from fastapi import FastAPI
-from starlette_prometheus import metrics, PrometheusMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
+from app.api.v1.endpoints import products
+from app.db.session import engine
+from app.db.base import Base
+
 
 app = FastAPI(
-    title="Product Service",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-app.add_middleware(PrometheusMiddleware)
-app.add_route("/metrics", metrics)
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+
+app.include_router(products.router, prefix=settings.API_V1_STR, tags=["products"])
 
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "service": "product-service"}
-
-
-@app.get("/")
-def root():
-    return {"message": "Welcome to Product Service"}
+    return {"status": "ok"}
