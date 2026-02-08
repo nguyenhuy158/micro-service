@@ -3,6 +3,9 @@
 install-dev:
 	pip install -r dev-requirements.txt
 
+test:
+	pytest services/product-service/tests services/user-service/tests services/order-service/tests services/inventory-service/tests services/payment-service/tests
+
 type-check:
 	mypy services/user-service/app services/product-service/app services/order-service/app services/inventory-service/app services/payment-service/app services/docs-service/app shared/app
 
