@@ -41,7 +41,8 @@ window.messages = {
         order_total: "Total",
         no_orders: "You haven't placed any orders yet.",
         items: "items",
-        view_details: "View Details"
+        view_details: "View Details",
+        or_continue_with: "Or continue with"
     },
     vi: {
         welcome: "Xin chào",
@@ -85,6 +86,7 @@ window.messages = {
         order_total: "Tổng tiền",
         no_orders: "Bạn chưa có đơn hàng nào.",
         items: "sản phẩm",
-        view_details: "Xem chi tiết"
+        view_details: "Xem chi tiết",
+        or_continue_with: "Hoặc tiếp tục với"
     }
 };

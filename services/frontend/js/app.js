@@ -1,3 +1,6 @@
+const GOOGLE_CLIENT_ID = window.APP_CONFIG?.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+const API_BASE_URL = window.APP_CONFIG?.API_BASE_URL || "http://localhost:8000";
+
 // Setup Toastify helper (Global scope)
 const toast = (text, type = 'info') => {
     let bg = "linear-gradient(to right, #00b09b, #96c93d)";
@@ -94,6 +97,35 @@ document.addEventListener('alpine:init', () => {
         user: Alpine.$persist(null).as('auth_user'),
         view: 'login', // login, register
 
+        init() {
+            // Watch for view changes to render Google button
+            Alpine.effect(() => {
+                if (!this.isAuthenticated && this.view === 'login') {
+                    // Give Alpine a moment to render the view
+                    setTimeout(() => this.initGoogleAuth(), 100);
+                }
+            });
+        },
+
+        initGoogleAuth() {
+            if (typeof google === 'undefined') return;
+
+            google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: (response) => {
+                    this.loginWithGoogle(response.credential);
+                }
+            });
+
+            const btnParent = document.getElementById('google-login-btn');
+            if (btnParent) {
+                google.accounts.id.renderButton(
+                    btnParent,
+                    { theme: "outline", size: "large", width: btnParent.offsetWidth }
+                );
+            }
+        },
+
         get isAuthenticated() {
             return !!this.token;
         },
@@ -104,7 +136,7 @@ document.addEventListener('alpine:init', () => {
                 params.append('username', username);
                 params.append('password', password);
 
-                const res = await fetch('http://localhost:8000/api/v1/user/auth/login', {
+                const res = await fetch(`${API_BASE_URL}/api/v1/user/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: params
@@ -124,9 +156,29 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        async loginWithGoogle(idToken) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/v1/user/auth/login/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_token: idToken })
+                });
+
+                if (!res.ok) throw new Error('Google login failed');
+
+                const data = await res.json();
+                this.token = data.access_token;
+                
+                await this.fetchMe();
+                toast(t('login_success'), 'success');
+            } catch (e) {
+                toast(t('login_failed') + ": " + e.message, 'error');
+            }
+        },
+
         async register(userData) {
             try {
-                const res = await fetch('http://localhost:8000/api/v1/user/auth/register', {
+                const res = await fetch(`${API_BASE_URL}/api/v1/user/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(userData)
@@ -146,7 +198,7 @@ document.addEventListener('alpine:init', () => {
 
         async fetchMe() {
             try {
-                const res = await fetch('http://localhost:8000/api/v1/user/users/me', {
+                const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me`, {
                     headers: { 'Authorization': `Bearer ${this.token}` }
                 });
                 if (res.ok) {
@@ -204,7 +256,7 @@ document.addEventListener('alpine:init', () => {
                     total_amount: this.total
                 };
 
-                const res = await fetch('http://localhost:8000/api/v1/order/orders/', {
+                const res = await fetch(`${API_BASE_URL}/api/v1/order/orders/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -266,7 +318,7 @@ document.addEventListener('alpine:init', () => {
                 const auth = Alpine.store('auth');
                 if (!auth || !auth.token) return;
 
-                const res = await fetch('http://localhost:8000/api/v1/product/products/', {
+                const res = await fetch(`${API_BASE_URL}/api/v1/product/products/`, {
                     headers: { 'Authorization': `Bearer ${auth.token}` }
                 });
 
@@ -313,7 +365,7 @@ document.addEventListener('alpine:init', () => {
                 const auth = Alpine.store('auth');
                 if (!auth || !auth.token || !auth.user) return;
 
-                const res = await fetch(`http://localhost:8000/api/v1/order/orders/user/${auth.user.id}`, {
+                const res = await fetch(`${API_BASE_URL}/api/v1/order/orders/user/${auth.user.id}`, {
                     headers: { 'Authorization': `Bearer ${auth.token}` }
                 });
 

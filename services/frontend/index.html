@@ -44,8 +44,10 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs-i18n@2.4.0/dist/cdn.min.js"></script>
 
     <!-- 3. App Logic -->
+    <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
     <script defer src="js/app.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- 4. Alpine Core -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -134,6 +136,17 @@
                             </button>
                         </div>
                     </form>
+
+                    <div class="relative my-6">
+                        <div class="absolute inset-0 flex items-center">
+                            <span class="w-full border-t border-gray-100 dark:border-gray-700"></span>
+                        </div>
+                        <div class="relative flex justify-center text-xs uppercase">
+                            <span class="bg-white dark:bg-gray-800 px-2 text-gray-400 font-bold" x-text="$t('or_continue_with')"></span>
+                        </div>
+                    </div>
+
+                    <div id="google-login-btn" class="flex justify-center"></div>
 
                     <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
                         <p class="text-sm text-gray-500">

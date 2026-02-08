@@ -171,6 +171,9 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_USER}:${POSTGRES_PASSWORD_USER}@user-db/${POSTGRES_DB_USER}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+      SECRET_KEY: ${SECRET_KEY}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     depends_on:
       - user-db
       - rabbitmq
@@ -281,6 +284,9 @@ services:
       context: ./services/frontend
       dockerfile: Dockerfile
     container_name: frontend
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      API_BASE_URL: ${VITE_API_URL:-http://localhost:8000}
     volumes:
       - ./services/frontend:/usr/share/nginx/html
     ports:
