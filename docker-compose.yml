@@ -1,0 +1,269 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # API Gateway (Kong DB-less)
+  # ==========================================
+  kong:
+    image: kong:3.4-alpine
+    container_name: kong-gateway
+    restart: always
+    volumes:
+      - ./gateway/kong/kong.yml:/usr/local/kong/declarative/kong.yml
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_PLUGINS: bundled
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    networks:
+      - microservice-net
+
+  # ==========================================
+  # Infrastructure
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    networks:
+      - microservice-net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - microservice-net
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.3
+    container_name: meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+    networks:
+      - microservice-net
+
+  # ==========================================
+  # Databases (One per Service)
+  # ==========================================
+  user-db:
+    image: postgres:15-alpine
+    container_name: user-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_USER}
+      POSTGRES_DB: ${POSTGRES_DB_USER}
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    networks:
+      - microservice-net
+
+  product-db:
+    image: postgres:15-alpine
+    container_name: product-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_PRODUCT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PRODUCT}
+      POSTGRES_DB: ${POSTGRES_DB_PRODUCT}
+    volumes:
+      - product_db_data:/var/lib/postgresql/data
+    networks:
+      - microservice-net
+
+  order-db:
+    image: postgres:15-alpine
+    container_name: order-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_ORDER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_ORDER}
+      POSTGRES_DB: ${POSTGRES_DB_ORDER}
+    volumes:
+      - order_db_data:/var/lib/postgresql/data
+    networks:
+      - microservice-net
+
+  inventory-db:
+    image: postgres:15-alpine
+    container_name: inventory-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_INVENTORY}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_INVENTORY}
+      POSTGRES_DB: ${POSTGRES_DB_INVENTORY}
+    volumes:
+      - inventory_db_data:/var/lib/postgresql/data
+    networks:
+      - microservice-net
+
+  payment-db:
+    image: postgres:15-alpine
+    container_name: payment-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_PAYMENT}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_PAYMENT}
+      POSTGRES_DB: ${POSTGRES_DB_PAYMENT}
+    volumes:
+      - payment_db_data:/var/lib/postgresql/data
+    networks:
+      - microservice-net
+
+  # ==========================================
+  # Observability
+  # ==========================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    container_name: jaeger
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    ports:
+      - "16686:16686" # Web UI
+      - "14268:14268"
+      - "14250:14250"
+    networks:
+      - microservice-net
+
+  prometheus:
+    image: prom/prometheus:v2.46.0
+    container_name: prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - microservice-net
+
+  grafana:
+    image: grafana/grafana:10.0.3
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - microservice-net
+
+  # ==========================================
+  # Microservices
+  # ==========================================
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/user-service/app:/app/app
+      - ./shared/app:/app/shared
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER_USER}:${POSTGRES_PASSWORD_USER}@user-db/${POSTGRES_DB_USER}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+    depends_on:
+      - user-db
+      - rabbitmq
+    networks:
+      - microservice-net
+
+  product-service:
+    build:
+      context: ./services/product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/product-service/app:/app/app
+      - ./shared/app:/app/shared
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER_PRODUCT}:${POSTGRES_PASSWORD_PRODUCT}@product-db/${POSTGRES_DB_PRODUCT}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_KEY: ${MEILI_MASTER_KEY}
+    depends_on:
+      - product-db
+      - rabbitmq
+      - meilisearch
+    networks:
+      - microservice-net
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/order-service/app:/app/app
+      - ./shared/app:/app/shared
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER_ORDER}:${POSTGRES_PASSWORD_ORDER}@order-db/${POSTGRES_DB_ORDER}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379/0
+      INVENTORY_SERVICE_URL: http://inventory-service:8000
+      PAYMENT_SERVICE_URL: http://payment-service:8000
+      PRODUCT_SERVICE_URL: http://product-service:8000
+    depends_on:
+      - order-db
+      - rabbitmq
+      - redis
+    networks:
+      - microservice-net
+
+  inventory-service:
+    build:
+      context: ./services/inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/inventory-service/app:/app/app
+      - ./shared/app:/app/shared
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER_INVENTORY}:${POSTGRES_PASSWORD_INVENTORY}@inventory-db/${POSTGRES_DB_INVENTORY}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+    depends_on:
+      - inventory-db
+      - rabbitmq
+    networks:
+      - microservice-net
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./services/payment-service/app:/app/app
+      - ./shared/app:/app/shared
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER_PAYMENT}:${POSTGRES_PASSWORD_PAYMENT}@payment-db/${POSTGRES_DB_PAYMENT}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+    depends_on:
+      - payment-db
+      - rabbitmq
+    networks:
+      - microservice-net
+
+volumes:
+  user_db_data:
+  product_db_data:
+  order_db_data:
+  inventory_db_data:
+  payment_db_data:
+
+networks:
+  microservice-net:
+    driver: bridge
