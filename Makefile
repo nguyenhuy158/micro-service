@@ -1,4 +1,4 @@
-.PHONY: type-check lint format install-dev
+.PHONY: type-check lint format install-dev up down restart logs ps
 
 install-dev:
 	pip install -r dev-requirements.txt
@@ -11,3 +11,17 @@ lint:
 
 format:
 	ruff format .
+
+up:
+	docker-compose up -d --build
+
+down:
+	docker-compose down
+
+restart: down up
+
+logs:
+	docker-compose logs -f
+
+ps:
+	docker-compose ps
