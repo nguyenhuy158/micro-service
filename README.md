@@ -119,7 +119,7 @@ docker-compose up -d --build
 
 # 3. Access Services
 # - Gateway: http://localhost:8000
-# - Grafana: http://localhost:3000
+# - Grafana: http://localhost:3001
 # - Jaeger: http://localhost:16686
 # - Prometheus: http://localhost:9090
 ```

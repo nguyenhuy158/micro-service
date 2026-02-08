@@ -35,7 +35,7 @@
 
 ### 3.3. Observability Stack
 - **Prometheus (Port 9090):** Scrapes metrics from services (via `/metrics` endpoint).
-- **Grafana (Port 3000):** Visualizes metrics (Dashboards).
+- **Grafana (Port 3001):** Visualizes metrics (Dashboards).
 - **Jaeger (Port 16686):** Distributed tracing to track requests across services.
 
 ## 4. Directory Structure
