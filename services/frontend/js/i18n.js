@@ -1,5 +1,4 @@
-// services/frontend/js/i18n.js
-export const messages = {
+window.messages = {
     en: {
         welcome: "Welcome",
         login: "Login",

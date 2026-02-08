@@ -1,7 +1,4 @@
-import { messages } from './i18n.js';
-import autoAnimate from 'https://cdn.jsdelivr.net/npm/@formkit/auto-animate@0.8.1/index.min.js';
-
-// Setup Toastify helper (Global scope or module scope)
+// Setup Toastify helper (Global scope)
 const toast = (text, type = 'info') => {
     let bg = "linear-gradient(to right, #00b09b, #96c93d)";
     if (type === 'error') bg = "linear-gradient(to right, #ff5f6d, #ffc371)";
@@ -20,8 +17,12 @@ const toast = (text, type = 'info') => {
 
 document.addEventListener('alpine:init', () => {
     // 1. Initialize I18n
-    // The plugin adds $t magic, but we need to set messages
-    window.Alpine.I18n.create(messages);
+    // Ensure messages are loaded from window.messages
+    if (window.Alpine.I18n && window.messages) {
+        window.Alpine.I18n.create(window.messages);
+    } else {
+        console.error("I18n plugin or messages not loaded!");
+    }
 
     // 2. Define Stores
     
@@ -38,7 +39,6 @@ document.addEventListener('alpine:init', () => {
             this.$watch('theme', () => this.applyTheme());
             this.$watch('lang', (val) => {
                 this.applyLang();
-                // Persist handled by $persist
             });
         },
 
@@ -64,9 +64,12 @@ document.addEventListener('alpine:init', () => {
         },
 
         applyLang() {
-            window.Alpine.I18n.locale = this.lang;
-            // Also update Day.js locale if loaded
-            if (window.dayjs) window.dayjs.locale(this.lang);
+            if (window.Alpine.I18n) {
+                window.Alpine.I18n.locale = this.lang;
+            }
+            if (window.dayjs) {
+                window.dayjs.locale(this.lang);
+            }
         }
     });
 
@@ -139,9 +142,14 @@ document.addEventListener('alpine:init', () => {
         loading: false,
 
         async init() {
-            // Apply AutoAnimate
-            if (this.$refs.productList) {
-                autoAnimate(this.$refs.productList);
+            // Apply AutoAnimate if available globally
+            // Note: autoAnimate (formkit) might not be globally exposed via simple script tag easily without a shim,
+            // but if window.autoAnimate exists (from some CDNs), use it.
+            // For now, removing explicit autoAnimate call to fix module error unless we confirm the global.
+            // If the user insists on AutoAnimate, we'd need a proper import map or global build.
+            // Assuming for now we skip or check existence to avoid crash.
+            if (window.autoAnimate && this.$refs.productList) {
+                window.autoAnimate(this.$refs.productList);
             }
 
             if (Alpine.store('auth').isAuthenticated) {
