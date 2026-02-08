@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-from shared.schemas.api_key import ApiKeyResponse
 
 
 class InventoryBase(BaseModel):
@@ -38,3 +37,4 @@ class ApiKeyCreate(BaseModel):
     product_id: UUID
     order_id: UUID
     quota_limit: int = 1000
+    rate_limit: int = 60

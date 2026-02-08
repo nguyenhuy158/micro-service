@@ -33,4 +33,5 @@ class ApiKey(Base):
     key: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     quota_limit: Mapped[int] = mapped_column(Integer, default=1000)
     quota_used: Mapped[int] = mapped_column(Integer, default=0)
+    rate_limit: Mapped[int] = mapped_column(Integer, default=60)  # Added rate limit
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

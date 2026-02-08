@@ -98,6 +98,7 @@ class InventoryService:
         product_id: UUID,
         order_id: UUID,
         quota_limit: int,
+        rate_limit: int,  # Added rate_limit
     ) -> ApiKey:
         import secrets
 
@@ -110,6 +111,7 @@ class InventoryService:
             key=api_key,
             quota_limit=quota_limit,
             quota_used=0,
+            rate_limit=rate_limit,  # Set rate_limit
             is_active=True,
         )
         db.add(db_key)

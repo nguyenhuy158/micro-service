@@ -11,6 +11,7 @@ class ApiKeyResponse(BaseModel):
     key: str
     quota_limit: int
     quota_used: int
+    rate_limit: int
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)

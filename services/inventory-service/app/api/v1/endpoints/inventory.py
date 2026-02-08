@@ -74,7 +74,12 @@ async def generate_api_key(
     *, db: AsyncSession = Depends(get_db), key_in: ApiKeyCreate
 ) -> Any:
     return await InventoryService.generate_api_key(
-        db, key_in.user_id, key_in.product_id, key_in.order_id, key_in.quota_limit
+        db,
+        key_in.user_id,
+        key_in.product_id,
+        key_in.order_id,
+        key_in.quota_limit,
+        key_in.rate_limit,
     )
 
 

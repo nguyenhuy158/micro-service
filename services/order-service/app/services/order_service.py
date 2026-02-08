@@ -111,11 +111,13 @@ class OrderService:
         for item in db_order.items:
             product = await InternalServiceClient.get_product(item.product_id)
             quota_limit = product.get("quota_limit", 1000) if product else 1000
+            rate_limit = product.get("rate_limit", 60) if product else 60
             await InternalServiceClient.generate_api_key(
                 user_id=db_order.user_id,
                 product_id=item.product_id,
                 order_id=db_order.id,
                 quota_limit=quota_limit,
+                rate_limit=rate_limit,
             )
 
         # TODO: Publish Order.Placed event to RabbitMQ

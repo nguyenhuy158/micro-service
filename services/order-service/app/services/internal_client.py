@@ -79,7 +79,11 @@ class InternalServiceClient:
 
     @staticmethod
     async def generate_api_key(
-        user_id: UUID, product_id: UUID, order_id: UUID, quota_limit: int = 1000
+        user_id: UUID,
+        product_id: UUID,
+        order_id: UUID,
+        quota_limit: int = 1000,
+        rate_limit: int = 60,
     ) -> bool:
         async with httpx.AsyncClient() as client:
             try:
@@ -90,6 +94,7 @@ class InternalServiceClient:
                         "product_id": str(product_id),
                         "order_id": str(order_id),
                         "quota_limit": quota_limit,
+                        "rate_limit": rate_limit,
                     },
                     timeout=5.0,
                 )
