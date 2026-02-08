@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+pydantic-settings
+python-jose[cryptography]
+passlib[bcrypt]
+httpx
+pika  # for rabbitmq
+python-multipart
+starlette-prometheus
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-instrumentation-fastapi
