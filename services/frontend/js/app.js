@@ -50,6 +50,8 @@ document.addEventListener('alpine:init', () => {
         theme: Alpine.$persist('system').as('app_theme'),
         lang: Alpine.$persist('en').as('app_lang'),
         activeTab: 'products', // products, orders
+        cartOpen: false,
+        searchExpanded: false,
 
         init() {
             // Validate lang
@@ -317,6 +319,7 @@ document.addEventListener('alpine:init', () => {
         filteredList: [],
         search: '',
         loading: false,
+        selectedProduct: null,
 
         async init() {
             if (window.autoAnimate && this.$refs.productList) {
@@ -399,7 +402,8 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 if (res.ok) {
-                    this.list = await res.json();
+                    const data = await res.json();
+                    this.list = data.map(o => ({ ...o, _expanded: false }));
                 }
             } catch (e) {
                 console.error("Fetch orders error", e);

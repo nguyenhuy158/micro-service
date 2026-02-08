@@ -17,9 +17,17 @@
                 extend: {
                     colors: {
                         primary: {
-                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8',
-                            500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e',
+                            50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6',
+                            500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843',
                         },
+                        secondary: {
+                            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#a78bfa',
+                            500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95',
+                        },
+                    },
+                    borderRadius: {
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
                     }
                 }
             }
@@ -27,10 +35,18 @@
     </script>
     <style>
         [x-cloak] { display: none !important; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.5); border-radius: 3px; }
-        .glass-effect { backdrop-filter: blur(8px); background-color: rgba(255, 255, 255, 0.8); }
-        .dark .glass-effect { background-color: rgba(31, 41, 55, 0.8); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .glass-effect { backdrop-filter: blur(12px); background-color: rgba(255, 255, 255, 0.7); }
+        .dark .glass-effect { background-color: rgba(15, 23, 42, 0.7); }
+        
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(236, 72, 153, 0.1), transparent),
+                        radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.1), transparent);
+        }
     </style>
 
     <!-- 1. Libraries -->
@@ -45,6 +61,7 @@
 
     <!-- 2. Alpine Plugins -->
     <script src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs-i18n@2.4.0/dist/cdn.min.js"></script>
 
     <!-- 3. App Logic -->
@@ -59,56 +76,77 @@
 <body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen" x-data x-cloak>
 
     <!-- Navigation Bar -->
-    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-200 dark:border-gray-700">
-        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-8">
-                <h1 @click="$store.ui.activeTab = 'products'" class="text-2xl font-black cursor-pointer bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-indigo-600">
-                    MicroShop
-                </h1>
+    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-100 dark:border-gray-800 transition-all duration-300">
+        <div class="container mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-10">
+                <div @click="$store.ui.activeTab = 'products'" class="flex items-center gap-2 cursor-pointer group">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-primary-600 to-secondary-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-200 dark:shadow-none group-hover:rotate-12 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    </div>
+                    <h1 class="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
+                        MicroShop
+                    </h1>
+                </div>
                 
                 <template x-if="$store.auth.isAuthenticated">
-                    <div class="hidden md:flex items-center gap-4">
+                    <div class="hidden lg:flex items-center gap-1">
                         <button 
                             @click="$store.ui.activeTab = 'products'" 
-                            :class="$store.ui.activeTab === 'products' ? 'text-primary-600 font-bold' : 'text-gray-500 hover:text-primary-500'"
-                            class="transition px-2 py-1"
+                            :class="$store.ui.activeTab === 'products' ? 'bg-primary-50 text-primary-600' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100'"
+                            class="transition-all px-4 py-2 rounded-xl font-bold text-sm"
                             x-text="$t('products')">
                         </button>
                         <button 
                             @click="$store.ui.activeTab = 'orders'" 
-                            :class="$store.ui.activeTab === 'orders' ? 'text-primary-600 font-bold' : 'text-gray-500 hover:text-primary-500'"
-                            class="transition px-2 py-1"
+                            :class="$store.ui.activeTab === 'orders' ? 'bg-primary-50 text-primary-600' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100'"
+                            class="transition-all px-4 py-2 rounded-xl font-bold text-sm"
                             x-text="$t('my_orders')">
                         </button>
                     </div>
                 </template>
             </div>
 
-            <div class="flex items-center gap-3">
-                <!-- Theme Toggle -->
-                <button @click="$store.ui.toggleTheme()" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                    <span x-show="$store.ui.theme === 'light'">🌞</span>
-                    <span x-show="$store.ui.theme === 'dark'">🌙</span>
-                    <span x-show="$store.ui.theme === 'system'">🖥️</span>
-                </button>
+            <div class="flex items-center gap-2">
+                <!-- Lang & Theme (Grouped) -->
+                <div class="hidden md:flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl border border-gray-200 dark:border-gray-700">
+                    <button @click="$store.ui.toggleTheme()" class="p-2 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition shadow-sm hover:shadow-md">
+                        <span x-show="$store.ui.theme === 'light'">🌞</span>
+                        <span x-show="$store.ui.theme === 'dark'">🌙</span>
+                        <span x-show="$store.ui.theme === 'system'">🖥️</span>
+                    </button>
+                    <div class="w-[1px] h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                    <button @click="$store.ui.toggleLang()" class="px-3 py-1.5 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition shadow-sm hover:shadow-md font-bold text-xs">
+                        <span x-text="$store.ui.lang.toUpperCase()"></span>
+                    </button>
+                </div>
 
-                <!-- Lang Toggle -->
-                <button @click="$store.ui.toggleLang()" class="w-10 h-10 flex items-center justify-center border border-gray-200 dark:border-gray-600 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition font-mono text-xs font-bold">
-                    <span x-text="$store.ui.lang.toUpperCase()"></span>
-                </button>
-
-                <!-- User Profile -->
+                <!-- User & Cart -->
                 <template x-if="$store.auth.isAuthenticated">
-                    <div class="flex items-center gap-4 ml-2">
-                        <div class="hidden sm:flex flex-col items-end">
-                            <span x-text="$store.auth.user?.full_name || $store.auth.user?.email" class="text-sm font-bold"></span>
-                            <span class="text-[10px] text-gray-500 uppercase tracking-widest" x-text="$store.auth.user?.is_active ? 'Active' : 'Inactive'"></span>
-                        </div>
-                        <button @click="$store.auth.logout()" class="bg-red-50 text-red-600 p-2 rounded-full hover:bg-red-100 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <div class="flex items-center gap-2">
+                        <!-- Cart Trigger -->
+                        <button @click="$store.ui.cartOpen = true" class="relative p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-primary-300 transition group shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 dark:text-gray-300 group-hover:text-primary-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
+                            <span x-show="$store.cart.items.length > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-bounce shadow-lg" x-text="$store.cart.items.length"></span>
                         </button>
+
+                        <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
+
+                        <!-- Profile Dropdown (Simplified for now) -->
+                        <div class="flex items-center gap-3 pl-2">
+                            <div class="hidden sm:flex flex-col items-end">
+                                <span x-text="$store.auth.user?.full_name" class="text-sm font-black truncate max-w-[120px]"></span>
+                                <span class="text-[9px] font-black uppercase tracking-tighter text-green-500" x-text="$t('online') || 'ONLINE'"></span>
+                            </div>
+                            <button @click="$store.auth.logout()" class="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition shadow-sm border border-red-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </template>
             </div>
@@ -119,77 +157,103 @@
 
         <!-- Auth Section -->
         <template x-if="!$store.auth.isAuthenticated">
-            <div class="max-w-md mx-auto mt-12">
-                <!-- Login Form -->
-                <div x-show="$store.auth.view === 'login'" x-transition class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700">
-                    <h2 class="text-3xl font-black mb-2 text-center" x-text="$t('sign_in')"></h2>
-                    <p class="text-gray-500 text-center mb-8" x-text="$t('welcome')"></p>
+            <div class="max-w-xl mx-auto mt-20 px-4">
+                <div class="bg-white dark:bg-gray-800 p-10 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+                    <!-- Decorative background elements -->
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-500/10 rounded-full blur-3xl"></div>
+                    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-secondary-500/10 rounded-full blur-3xl"></div>
 
-                    <form x-data="{ email: '', password: '' }" @submit.prevent="$store.auth.login(email, password)">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1" x-text="$t('email')"></label>
-                                <input x-model="email" type="email" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" required placeholder="name@example.com">
+                    <!-- Login Form -->
+                    <div x-show="$store.auth.view === 'login'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0">
+                        <div class="text-center mb-10">
+                            <div class="w-16 h-16 bg-gradient-to-tr from-primary-600 to-secondary-500 rounded-2xl flex items-center justify-center text-white shadow-xl mx-auto mb-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1" x-text="$t('password')"></label>
-                                <input x-model="password" type="password" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" required placeholder="••••••••">
+                            <h2 class="text-4xl font-black mb-3 tracking-tight" x-text="$t('sign_in')"></h2>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium" x-text="$t('welcome_back') || 'Welcome back to MicroShop'"></p>
+                        </div>
+
+                        <form x-data="{ email: '', password: '' }" @submit.prevent="$store.auth.login(email, password)" class="space-y-6">
+                            <div class="space-y-4">
+                                <div class="group">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1" x-text="$t('email')"></label>
+                                    <div class="relative">
+                                        <input x-model="email" type="email" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-700 border-2 border-transparent focus:border-primary-500 rounded-2xl focus:ring-0 transition shadow-inner" required placeholder="name@example.com">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute right-4 top-4 text-gray-300 group-focus-within:text-primary-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="group">
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1" x-text="$t('password')"></label>
+                                    <div class="relative">
+                                        <input x-model="password" type="password" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-700 border-2 border-transparent focus:border-primary-500 rounded-2xl focus:ring-0 transition shadow-inner" required placeholder="••••••••">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute right-4 top-4 text-gray-300 group-focus-within:text-primary-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
-                            <button type="submit" class="w-full bg-primary-600 text-white font-bold py-4 rounded-xl hover:bg-primary-700 transition transform hover:scale-[1.01] shadow-lg shadow-primary-200 dark:shadow-none mt-4">
+                            
+                            <button type="submit" class="w-full bg-primary-600 text-white font-black py-5 rounded-2xl hover:bg-primary-700 transition transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-primary-200 dark:shadow-none text-lg">
                                 <span x-text="$t('sign_in')"></span>
                             </button>
-                        </div>
-                    </form>
+                        </form>
 
-                    <div class="relative my-6">
-                        <div class="absolute inset-0 flex items-center">
-                            <span class="w-full border-t border-gray-100 dark:border-gray-700"></span>
+                        <div class="relative my-10">
+                            <div class="absolute inset-0 flex items-center">
+                                <span class="w-full border-t border-gray-100 dark:border-gray-700"></span>
+                            </div>
+                            <div class="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
+                                <span class="bg-white dark:bg-gray-800 px-4 text-gray-400" x-text="$t('or_continue_with')"></span>
+                            </div>
                         </div>
-                        <div class="relative flex justify-center text-xs uppercase">
-                            <span class="bg-white dark:bg-gray-800 px-2 text-gray-400 font-bold" x-text="$t('or_continue_with')"></span>
+
+                        <div id="google-login-btn" class="flex justify-center transition transform hover:scale-[1.02]"></div>
+
+                        <div class="mt-12 pt-8 border-t border-gray-50 dark:border-gray-700 text-center">
+                            <p class="text-gray-500 font-medium">
+                                <span x-text="$t('no_account')"></span>
+                                <button @click="$store.auth.view = 'register'" class="text-primary-600 font-black hover:underline ml-1" x-text="$t('sign_up')"></button>
+                            </p>
                         </div>
                     </div>
 
-                    <div id="google-login-btn" class="flex justify-center"></div>
+                    <!-- Register Form -->
+                    <div x-show="$store.auth.view === 'register'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform translate-y-4" x-transition:enter-end="opacity-100 transform translate-y-0">
+                        <div class="text-center mb-10">
+                            <h2 class="text-4xl font-black mb-3 tracking-tight" x-text="$t('sign_up')"></h2>
+                            <p class="text-gray-500 dark:text-gray-400 font-medium" x-text="$t('join_community') || 'Join our microservice ecosystem'"></p>
+                        </div>
 
-                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
-                        <p class="text-sm text-gray-500">
-                            <span x-text="$t('no_account')"></span>
-                            <button @click="$store.auth.view = 'register'" class="text-primary-600 font-bold hover:underline" x-text="$t('sign_up')"></button>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Register Form -->
-                <div x-show="$store.auth.view === 'register'" x-transition class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700">
-                    <h2 class="text-3xl font-black mb-2 text-center" x-text="$t('sign_up')"></h2>
-                    <p class="text-gray-500 text-center mb-8" x-text="$t('welcome')"></p>
-
-                    <form x-data="{ email: '', password: '', full_name: '' }" @submit.prevent="$store.auth.register({email, password, full_name})">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1" x-text="$t('email')"></label>
-                                <input x-model="email" type="email" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" required placeholder="name@example.com">
+                        <form x-data="{ email: '', password: '', full_name: '' }" @submit.prevent="$store.auth.register({email, password, full_name})" class="space-y-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1" x-text="$t('full_name')"></label>
+                                    <input x-model="full_name" type="text" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-700 border-2 border-transparent focus:border-primary-500 rounded-2xl focus:ring-0 transition shadow-inner" required placeholder="John Doe">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1" x-text="$t('email')"></label>
+                                    <input x-model="email" type="email" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-700 border-2 border-transparent focus:border-primary-500 rounded-2xl focus:ring-0 transition shadow-inner" required placeholder="name@example.com">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1" x-text="$t('password')"></label>
+                                    <input x-model="password" type="password" class="w-full px-5 py-4 bg-gray-50 dark:bg-gray-700 border-2 border-transparent focus:border-primary-500 rounded-2xl focus:ring-0 transition shadow-inner" required placeholder="••••••••">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1" x-text="$t('full_name')"></label>
-                                <input x-model="full_name" type="text" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" required placeholder="John Doe">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-1" x-text="$t('password')"></label>
-                                <input x-model="password" type="password" class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" required placeholder="••••••••">
-                            </div>
-                            <button type="submit" class="w-full bg-primary-600 text-white font-bold py-4 rounded-xl hover:bg-primary-700 transition transform hover:scale-[1.01] shadow-lg shadow-primary-200 dark:shadow-none mt-4">
+                            <button type="submit" class="w-full bg-primary-600 text-white font-black py-5 rounded-2xl hover:bg-primary-700 transition transform hover:scale-[1.02] shadow-xl shadow-primary-200 dark:shadow-none text-lg">
                                 <span x-text="$t('sign_up')"></span>
                             </button>
-                        </div>
-                    </form>
+                        </form>
 
-                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
-                        <p class="text-sm text-gray-500">
-                            <span x-text="$t('have_account')"></span>
-                            <button @click="$store.auth.view = 'login'" class="text-primary-600 font-bold hover:underline" x-text="$t('sign_in')"></button>
-                        </p>
+                        <div class="mt-12 pt-8 border-t border-gray-50 dark:border-gray-700 text-center">
+                            <p class="text-gray-500 font-medium">
+                                <span x-text="$t('have_account')"></span>
+                                <button @click="$store.auth.view = 'login'" class="text-primary-600 font-black hover:underline ml-1" x-text="$t('sign_in')"></button>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -197,184 +261,268 @@
 
         <!-- Authenticated Content -->
         <template x-if="$store.auth.isAuthenticated">
-            <div x-transition>
+            <div x-transition class="hero-gradient rounded-3xl p-1">
                 
                 <!-- Products View -->
-                <div x-show="$store.ui.activeTab === 'products'" class="grid grid-cols-1 lg:grid-cols-4 gap-8" x-data="products">
+                <div x-show="$store.ui.activeTab === 'products'" class="space-y-10" x-data="products">
                     
-                    <!-- Sidebar/Filters -->
-                    <div class="lg:col-span-1 space-y-6">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                            <div class="mb-6">
-                                <label class="block text-xs font-bold text-gray-400 uppercase mb-2" x-text="$t('search_placeholder')"></label>
-                                <div class="relative">
-                                    <input 
-                                        x-model.debounce.300ms="search"
-                                        type="text" 
-                                        class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" 
-                                        :placeholder="$t('search_placeholder')">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-3 top-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                            </div>
+                    <!-- Search & Filters Bar -->
+                    <div class="flex flex-col md:flex-row gap-6 items-center justify-between bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center gap-4 w-full md:w-auto">
+                            <h2 class="text-3xl font-black tracking-tight" x-text="$t('products')"></h2>
+                            <div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2 hidden sm:block"></div>
+                            <span class="text-gray-400 text-sm font-bold" x-text="filteredList.length + ' available'"></span>
                         </div>
 
-                        <!-- Mini Cart -->
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 sticky top-24">
-                            <div class="flex justify-between items-center mb-6 pb-4 border-b dark:border-gray-700">
-                                <h2 class="text-xl font-black" x-text="$t('cart')"></h2>
-                                <span class="bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-200 text-xs font-bold px-3 py-1 rounded-full" x-text="$store.cart.items.length"></span>
+                        <div class="flex items-center gap-4 w-full md:w-auto flex-grow max-w-2xl">
+                            <div class="relative flex-grow">
+                                <input 
+                                    x-model.debounce.300ms="search"
+                                    type="text" 
+                                    class="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-gray-700 border-2 border-transparent focus:border-primary-500 rounded-2xl focus:ring-0 transition shadow-inner" 
+                                    :placeholder="$t('search_placeholder')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
                             </div>
-
-                            <ul class="space-y-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar" x-data x-auto-animate>
-                                <template x-for="(item, index) in $store.cart.items" :key="index">
-                                    <li class="flex justify-between items-center text-sm p-3 bg-gray-50 dark:bg-gray-700 rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-600 transition">
-                                        <div class="flex flex-col">
-                                            <span x-text="item.name" class="font-bold"></span>
-                                            <span x-text="'$' + item.price" class="text-xs text-primary-600 dark:text-primary-400"></span>
-                                        </div>
-                                        <button @click="$store.cart.remove(index)" class="text-gray-300 hover:text-red-500 transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
-                                    </li>
-                                </template>
-                            </ul>
-
-                            <div x-show="$store.cart.items.length > 0" class="mt-6 pt-4 border-t dark:border-gray-700" x-transition>
-                                <div class="flex justify-between font-black mb-6 text-lg">
-                                    <span x-text="$t('total')"></span>
-                                    <span x-text="'$' + $store.cart.total.toFixed(2)" class="text-primary-600"></span>
-                                </div>
-                                <button 
-                                    @click="$store.cart.checkout()" 
-                                    :disabled="$store.cart.loading"
-                                    class="w-full bg-primary-600 text-white py-4 rounded-xl font-bold hover:bg-primary-700 transition shadow-lg shadow-primary-200 dark:shadow-none flex justify-center items-center gap-2 disabled:opacity-50">
-                                    <span x-show="$store.cart.loading" class="animate-spin text-lg">↻</span>
-                                    <span x-show="!$store.cart.loading" x-text="$t('checkout')"></span>
-                                    <span x-show="!$store.cart.loading">→</span>
-                                </button>
-                            </div>
-
-                            <div x-show="$store.cart.items.length === 0" class="text-gray-400 text-center py-12">
-                                <div class="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            
+                            <button @click="fetch" class="p-3 bg-gray-100 dark:bg-gray-700 rounded-2xl text-gray-500 hover:text-primary-600 transition shadow-sm border border-transparent hover:border-primary-100">
+                                <span :class="loading ? 'animate-spin' : ''" class="block">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
-                                </div>
-                                <span class="text-sm font-medium" x-text="$t('empty_cart')"></span>
-                            </div>
+                                </span>
+                            </button>
                         </div>
                     </div>
 
                     <!-- Products Grid -->
-                    <div class="lg:col-span-3">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-3xl font-black" x-text="$t('products')"></h2>
-                            <button @click="fetch" class="p-2 text-gray-400 hover:text-primary-600 transition flex items-center gap-2">
-                                <span :class="loading ? 'animate-spin' : ''">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </span>
-                                <span class="text-sm font-bold" x-text="$t('refresh')"></span>
-                            </button>
-                        </div>
+                    <div x-ref="productList" x-auto-animate class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        <template x-for="product in filteredList" :key="product.id">
+                            <div 
+                                @click="selectedProduct = product"
+                                class="bg-white dark:bg-gray-800 rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 dark:border-gray-800 flex flex-col group overflow-hidden relative cursor-pointer"
+                            >
+                                <!-- Product Image Area -->
+                                <div class="aspect-[4/5] bg-gray-50 dark:bg-gray-700 relative overflow-hidden">
+                                    <div class="absolute inset-0 flex items-center justify-center text-gray-200 dark:text-gray-600 transition-transform duration-700 group-hover:scale-110">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    
+                                    <!-- Badges -->
+                                    <div class="absolute top-4 left-4 flex flex-col gap-2">
+                                        <template x-if="product.stock < 5 && product.stock > 0">
+                                            <span class="bg-orange-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded-lg shadow-lg">Low Stock</span>
+                                        </template>
+                                        <template x-if="product.stock <= 0">
+                                            <span class="bg-red-500 text-white text-[10px] font-black uppercase px-2 py-1 rounded-lg shadow-lg">Out of Stock</span>
+                                        </template>
+                                    </div>
 
-                        <div x-ref="productList" x-auto-animate class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                            <template x-for="product in filteredList" :key="product.id">
-                                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col group">
-                                    <div class="mb-4 aspect-square bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden relative">
-                                        <!-- Placeholder Image -->
-                                        <div class="absolute inset-0 flex items-center justify-center text-gray-300">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <!-- Price Tag (Floating) -->
+                                    <div class="absolute bottom-4 right-4 translate-y-12 group-hover:translate-y-0 transition-all duration-300">
+                                        <span class="bg-white/90 dark:bg-gray-900/90 backdrop-blur px-4 py-2 rounded-2xl text-lg font-black shadow-xl border dark:border-gray-700" x-text="'$'+product.price"></span>
+                                    </div>
+                                    
+                                    <!-- Quick Actions Overlay -->
+                                    <div class="absolute inset-0 bg-primary-600/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                                        <button @click.stop="$store.cart.add(product)" :disabled="product.stock <= 0" class="w-12 h-12 bg-white text-primary-600 rounded-full flex items-center justify-center shadow-xl hover:bg-primary-600 hover:text-white transition transform translate-y-4 group-hover:translate-y-0 duration-300 disabled:opacity-50">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                             </svg>
-                                        </div>
-                                        <div class="absolute top-3 right-3">
-                                            <span class="bg-white/90 dark:bg-gray-800/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black shadow-sm" x-text="'$'+product.price"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Product Info -->
+                                <div class="p-6 flex flex-col flex-grow">
+                                    <div class="mb-1 flex justify-between items-start">
+                                        <span class="text-[10px] font-black uppercase tracking-widest text-primary-500">Technology</span>
+                                        <div class="flex gap-1">
+                                            <template x-for="i in 5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                                </svg>
+                                            </template>
                                         </div>
                                     </div>
-                                    <h3 x-text="product.name" class="font-black text-xl mb-2 text-gray-800 dark:text-white group-hover:text-primary-600 transition"></h3>
+                                    <h3 x-text="product.name" class="font-black text-xl mb-2 text-gray-900 dark:text-white leading-tight"></h3>
                                     <p x-text="product.description" class="text-gray-500 dark:text-gray-400 text-sm mb-6 line-clamp-2 flex-grow"></p>
                                     
-                                    <div class="flex items-center justify-between mt-auto pt-4 border-t border-gray-50 dark:border-gray-700">
-                                        <div class="flex flex-col">
-                                            <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Stock</span>
-                                            <span class="text-sm font-bold" :class="product.stock > 0 ? 'text-green-500' : 'text-red-500'" x-text="product.stock + ' left'"></span>
+                                    <div class="flex items-center justify-between mt-auto pt-4 border-t dark:border-gray-800">
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-2xl font-black text-gray-900 dark:text-white" x-text="'$'+product.price"></span>
                                         </div>
                                         <button 
-                                            @click="$store.cart.add(product)" 
+                                            @click.stop="$store.cart.add(product)" 
                                             :disabled="product.stock <= 0"
-                                            class="bg-gray-900 dark:bg-primary-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-primary-600 dark:hover:bg-primary-700 transition transform active:scale-95 disabled:opacity-50 shadow-lg shadow-gray-200 dark:shadow-none">
+                                            class="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white px-5 py-2.5 rounded-2xl text-xs font-black hover:bg-primary-600 hover:text-white transition-all transform active:scale-95 disabled:opacity-50">
                                             <span x-text="$t('add')"></span>
                                         </button>
                                     </div>
                                 </div>
-                            </template>
-                        </div>
-
-                        <!-- Empty State -->
-                        <div x-show="!loading && filteredList.length === 0" class="text-center py-24 bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                            <div class="w-20 h-20 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
                             </div>
-                            <p class="text-gray-500 font-bold" x-text="$t('no_products')"></p>
-                        </div>
+                        </template>
                     </div>
+
+                    <div x-show="!loading && filteredList.length === 0" class="text-center py-32 bg-white dark:bg-gray-800 rounded-[3rem] border-4 border-dashed border-gray-100 dark:border-gray-800">
+                        <div class="w-24 h-24 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-black mb-2" x-text="$t('no_products')"></h3>
+                        <p class="text-gray-400" x-text="$t('try_another_search') || 'Try searching for something else'"></p>
+                    </div>
+
+                    <!-- Product Detail Modal -->
+                    <template x-teleport="body">
+                        <div 
+                            x-show="selectedProduct" 
+                            x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            x-transition:leave="transition ease-in duration-200"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0"
+                            class="fixed inset-0 z-[110] bg-gray-900/60 backdrop-blur-md flex items-center justify-center p-4"
+                            @click="selectedProduct = null"
+                        >
+                            <div 
+                                @click.stop 
+                                x-show="selectedProduct"
+                                x-transition:enter="transition ease-out duration-300 transform"
+                                x-transition:enter-start="scale-95 opacity-0"
+                                x-transition:enter-end="scale-100 opacity-100"
+                                class="bg-white dark:bg-gray-800 w-full max-w-4xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border border-gray-100 dark:border-gray-700"
+                            >
+                                <!-- Modal Content -->
+                                <div class="w-full md:w-1/2 bg-gray-50 dark:bg-gray-700 aspect-square flex items-center justify-center relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-48 w-48 text-gray-200 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <button @click="selectedProduct = null" class="absolute top-6 left-6 w-12 h-12 bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full flex items-center justify-center shadow-lg hover:bg-white transition md:hidden">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/2 p-10 flex flex-col">
+                                    <div class="flex justify-between items-start mb-6">
+                                        <div>
+                                            <span class="text-xs font-black uppercase tracking-widest text-primary-500 mb-2 block">Premium Product</span>
+                                            <h2 x-text="selectedProduct?.name" class="text-4xl font-black tracking-tight"></h2>
+                                        </div>
+                                        <button @click="selectedProduct = null" class="hidden md:flex w-12 h-12 bg-gray-50 dark:bg-gray-700 rounded-2xl items-center justify-center hover:bg-red-50 hover:text-red-600 transition">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div class="flex items-center gap-4 mb-8">
+                                        <span class="text-3xl font-black text-primary-600" x-text="'$' + selectedProduct?.price"></span>
+                                        <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700"></div>
+                                        <span class="text-sm font-bold" :class="selectedProduct?.stock > 0 ? 'text-green-500' : 'text-red-500'" x-text="selectedProduct?.stock + ' pieces in stock'"></span>
+                                    </div>
+
+                                    <p x-text="selectedProduct?.description" class="text-gray-500 dark:text-gray-400 leading-relaxed mb-10 flex-grow"></p>
+
+                                    <div class="space-y-4 mt-auto">
+                                        <button 
+                                            @click="$store.cart.add(selectedProduct); selectedProduct = null" 
+                                            :disabled="selectedProduct?.stock <= 0"
+                                            class="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-primary-700 transition shadow-xl shadow-primary-200 dark:shadow-none disabled:opacity-50">
+                                            <span x-text="$t('add_to_cart') || 'Add to Cart'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Orders View -->
-                <div x-show="$store.ui.activeTab === 'orders'" class="max-w-4xl mx-auto" x-data="orders">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-3xl font-black" x-text="$t('my_orders')"></h2>
-                        <button @click="fetch" class="p-2 text-gray-400 hover:text-primary-600 transition flex items-center gap-2">
+                <div x-show="$store.ui.activeTab === 'orders'" class="max-w-5xl mx-auto" x-data="orders">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6 bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div>
+                            <h2 class="text-3xl font-black tracking-tight" x-text="$t('my_orders')"></h2>
+                            <p class="text-gray-400 font-bold text-sm" x-text="'Total ' + list.length + ' orders'"></p>
+                        </div>
+                        <button @click="fetch" class="flex items-center gap-2 px-6 py-3 bg-gray-50 dark:bg-gray-700 rounded-2xl text-gray-500 hover:text-primary-600 transition font-black text-sm">
                             <span :class="loading ? 'animate-spin' : ''">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                             </span>
+                            <span x-text="$t('refresh')"></span>
                         </button>
                     </div>
 
-                    <div class="space-y-4" x-auto-animate>
+                    <div class="grid gap-6" x-auto-animate>
                         <template x-for="order in list" :key="order.id">
-                            <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-primary-300 transition">
-                                <div class="flex flex-col md:flex-row justify-between gap-4 md:items-center">
-                                    <div class="space-y-1">
-                                        <div class="flex items-center gap-3">
-                                            <span class="font-black text-lg" x-text="'#' + order.id.substring(0,8)"></span>
-                                            <span :class="getStatusColor(order.status)" class="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full" x-text="order.status"></span>
+                            <div class="bg-white dark:bg-gray-800 rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800 hover:border-primary-200 transition-all duration-300 overflow-hidden group">
+                                <div class="p-8">
+                                    <div class="flex flex-col lg:flex-row justify-between gap-8 lg:items-center">
+                                        <div class="flex items-start gap-5">
+                                            <div class="w-16 h-16 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center text-primary-500 shrink-0 group-hover:bg-primary-50 transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                                </svg>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="flex flex-wrap items-center gap-3">
+                                                    <span class="font-black text-xl" x-text="'#' + order.id.substring(0,8).toUpperCase()"></span>
+                                                    <span :class="getStatusColor(order.status)" class="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg" x-text="order.status"></span>
+                                                </div>
+                                                <p class="text-sm text-gray-400 font-medium" x-text="formatDate(order.created_at)"></p>
+                                            </div>
                                         </div>
-                                        <p class="text-sm text-gray-400" x-text="formatDate(order.created_at)"></p>
+
+                                        <div class="flex items-center justify-between lg:justify-end gap-12">
+                                            <div class="text-right">
+                                                <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1" x-text="order.items.length + ' ' + $t('items')"></p>
+                                                <p class="text-3xl font-black text-gray-900 dark:text-white" x-text="'$' + order.total_amount.toFixed(2)"></p>
+                                            </div>
+                                            <button @click="order._expanded = !order._expanded" class="w-12 h-12 bg-gray-50 dark:bg-gray-700 rounded-2xl flex items-center justify-center hover:bg-primary-600 hover:text-white transition shadow-sm group-hover:shadow-md">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform duration-300" :class="order._expanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center justify-between md:justify-end gap-8">
-                                        <div class="text-right">
-                                            <p class="text-xs text-gray-400 font-bold uppercase" x-text="order.items.length + ' ' + $t('items')"></p>
-                                            <p class="text-xl font-black text-primary-600" x-text="'$' + order.total_amount.toFixed(2)"></p>
+
+                                    <!-- Expandable Items List -->
+                                    <div x-show="order._expanded" x-collapse x-cloak>
+                                        <div class="mt-8 pt-8 border-t dark:border-gray-700 space-y-4">
+                                            <template x-for="item in order.items" :key="item.product_id">
+                                                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-2xl">
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="w-10 h-10 bg-white dark:bg-gray-600 rounded-lg flex items-center justify-center font-black text-primary-500 text-xs">
+                                                            <span x-text="item.quantity + 'x'"></span>
+                                                        </div>
+                                                        <span class="font-bold text-sm" x-text="'Product ID: ' + item.product_id.substring(0,8)"></span>
+                                                    </div>
+                                                    <span class="font-black text-primary-600" x-text="'$' + item.price"></span>
+                                                </div>
+                                            </template>
                                         </div>
-                                        <button class="bg-gray-50 dark:bg-gray-700 p-2 rounded-xl hover:bg-primary-50 hover:text-primary-600 transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </template>
 
                         <!-- Empty Orders -->
-                        <div x-show="!loading && list.length === 0" class="text-center py-24 bg-white dark:bg-gray-800 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-700">
-                            <div class="w-20 h-20 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div x-show="!loading && list.length === 0" class="text-center py-32 bg-white dark:bg-gray-800 rounded-[3rem] border-4 border-dashed border-gray-100 dark:border-gray-800">
+                            <div class="w-24 h-24 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                 </svg>
                             </div>
-                            <p class="text-gray-500 font-bold" x-text="$t('no_orders')"></p>
+                            <h3 class="text-2xl font-black mb-2" x-text="$t('no_orders')"></h3>
+                            <button @click="$store.ui.activeTab = 'products'" class="mt-4 bg-primary-600 text-white px-8 py-3 rounded-2xl font-black hover:bg-primary-700 transition" x-text="$t('start_shopping') || 'Start Shopping'"></button>
                         </div>
                     </div>
                 </div>
@@ -388,6 +536,100 @@
     <footer class="container mx-auto px-4 py-12 text-center text-gray-400 text-sm">
         <p>&copy; 2026 MicroShop. Built with FastAPI, Kong, and Alpine.js.</p>
     </footer>
+
+    <!-- Cart Drawer Overlay -->
+    <div 
+        x-show="$store.ui.cartOpen" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-[100] bg-gray-900/50 backdrop-blur-sm"
+        @click="$store.ui.cartOpen = false"
+    ></div>
+
+    <!-- Cart Drawer Content -->
+    <div 
+        x-show="$store.ui.cartOpen" 
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed right-0 top-0 bottom-0 w-full max-w-md z-[101] bg-white dark:bg-gray-900 shadow-2xl flex flex-col border-l border-gray-100 dark:border-gray-800"
+    >
+        <div class="p-6 flex items-center justify-between border-b dark:border-gray-800">
+            <div class="flex items-center gap-3">
+                <h2 class="text-2xl font-black" x-text="$t('cart')"></h2>
+                <span class="bg-primary-500 text-white text-xs font-black px-2 py-1 rounded-lg" x-text="$store.cart.items.length"></span>
+            </div>
+            <button @click="$store.ui.cartOpen = false" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="flex-grow overflow-y-auto p-6 custom-scrollbar" x-auto-animate>
+            <template x-for="(item, index) in $store.cart.items" :key="index">
+                <div class="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl mb-4 group border border-transparent hover:border-primary-200 transition">
+                    <div class="w-16 h-16 bg-white dark:bg-gray-700 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    </div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between">
+                            <h3 x-text="item.name" class="font-bold text-gray-900 dark:text-white"></h3>
+                            <button @click="$store.cart.remove(index)" class="text-gray-400 hover:text-red-500 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span x-text="'$' + item.price" class="font-black text-primary-600"></span>
+                            <div class="flex items-center gap-2 bg-white dark:bg-gray-700 rounded-lg p-1 border dark:border-gray-600">
+                                <span class="px-2 text-xs font-bold">Qty: 1</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="$store.cart.items.length === 0">
+                <div class="h-full flex flex-col items-center justify-center text-center opacity-50">
+                    <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    </div>
+                    <p class="font-bold" x-text="$t('empty_cart')"></p>
+                    <button @click="$store.ui.cartOpen = false" class="mt-4 text-primary-600 font-black hover:underline" x-text="$t('start_shopping') || 'Start Shopping'"></button>
+                </div>
+            </template>
+        </div>
+
+        <div class="p-6 border-t dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+            <div class="flex justify-between items-end mb-6">
+                <span class="text-gray-500 font-bold uppercase text-xs tracking-widest" x-text="$t('total')"></span>
+                <span x-text="'$' + $store.cart.total.toFixed(2)" class="text-3xl font-black text-primary-600"></span>
+            </div>
+            <button 
+                @click="$store.cart.checkout()" 
+                :disabled="$store.cart.loading || $store.cart.items.length === 0"
+                class="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-lg hover:bg-primary-700 transition shadow-xl shadow-primary-200 dark:shadow-none flex justify-center items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group">
+                <span x-show="$store.cart.loading" class="animate-spin text-2xl">↻</span>
+                <span x-show="!$store.cart.loading" x-text="$t('checkout')"></span>
+                <svg x-show="!$store.cart.loading" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+        </div>
+    </div>
 
 </body>
 </html>

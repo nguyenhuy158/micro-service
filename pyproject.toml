@@ -1,6 +1,6 @@
 [project]
 name = "microservice-ecosystem"
-version = "1.1.0"
+version = "1.2.0"
 description = "A modular microservice architecture built with FastAPI, Kong Gateway, and RabbitMQ"
 authors = [
     { name = "Developer", email = "dev@example.com" }
