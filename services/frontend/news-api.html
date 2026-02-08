@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News API - Real-time Global News Feed</title>
+
+    <!-- Styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6',
+                            500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843',
+                        },
+                        secondary: {
+                            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#a78bfa',
+                            500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95',
+                        },
+                    },
+                    borderRadius: {
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .glass-effect { backdrop-filter: blur(12px); background-color: rgba(255, 255, 255, 0.7); }
+        .dark .glass-effect { background-color: rgba(15, 23, 42, 0.7); }
+        
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(236, 72, 153, 0.1), transparent),
+                        radial-gradient(circle at bottom left, rgba(139, 92, 246, 0.1), transparent);
+        }
+    </style>
+
+    <!-- 1. Libraries -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <!-- 2. Alpine Core -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen hero-gradient" x-data="{
+    products: [
+        {
+            id: 'c1e1b1c1-d1e1-41f1-a1b1-c1d1e1f1a1b1',
+            name: 'Starter',
+            price: 9.99,
+            rateLimit: 10,
+            quota: '1,000',
+            features: ['Latest Headlines', 'Standard Support', '10 Requests / min']
+        },
+        {
+            id: 'c2e2b2c2-d2e2-42f2-a2b2-c2d2e2f2a2b2',
+            name: 'Advance',
+            price: 49.99,
+            rateLimit: 100,
+            quota: '10,000',
+            features: ['Full Archives', 'Priority Support', '100 Requests / min', 'News Analytics']
+        },
+        {
+            id: 'c3e3b3c3-d3e3-43f3-a3b3-c3d3e3f3a3b3',
+            name: 'VIP',
+            price: 199.99,
+            rateLimit: 1000,
+            quota: '100,000',
+            features: ['Real-time Feed', '24/7 Dedicated Support', '1,000 Requests / min', 'Sentiment Analysis', 'Custom Webhooks']
+        }
+    ],
+    buy(product) {
+        Toastify({
+            text: `Selected ${product.name} tier. Redirecting to checkout...`,
+            duration: 3000,
+            gravity: 'top',
+            position: 'right',
+            backgroundColor: '#ec4899',
+        }).showToast();
+        
+        // In a real app, this would add to cart or redirect to payment
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
+    }
+}" x-cloak>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 glass-effect border-b border-gray-100 dark:border-gray-800 transition-all duration-300">
+        <div class="container mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="w-10 h-10 bg-gradient-to-tr from-primary-600 to-secondary-500 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                </div>
+                <h1 class="text-xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
+                    News API
+                </h1>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="#pricing" class="font-bold text-sm hover:text-primary-600 transition">Pricing</a>
+                <a href="index.html" class="bg-primary-600 text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-primary-700 transition shadow-lg shadow-primary-200 dark:shadow-none">
+                    Go to Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="container mx-auto px-4 pt-20 pb-16 text-center">
+        <h2 class="text-6xl font-black mb-6 tracking-tight leading-tight">
+            The World's News, <br/>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-secondary-500">Delivered in Real-time.</span>
+        </h2>
+        <p class="max-w-2xl mx-auto text-xl text-gray-500 dark:text-gray-400 mb-10 leading-relaxed font-medium">
+            Access millions of articles from over 80,000 sources worldwide. 
+            Built for developers who need speed, accuracy, and scalability.
+        </p>
+        <div class="flex items-center justify-center gap-4">
+            <a href="#pricing" class="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-xl">
+                Get Started
+            </a>
+            <button class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-8 py-4 rounded-2xl font-black text-lg hover:bg-gray-50 transition shadow-sm">
+                View Documentation
+            </button>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="container mx-auto px-4 py-20 grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-shadow group">
+            <div class="w-14 h-14 bg-primary-50 dark:bg-primary-900/30 text-primary-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-black mb-4">Ultra-Fast Latency</h3>
+            <p class="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+                Global CDN ensured endpoints with average response times under 50ms.
+            </p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-shadow group">
+            <div class="w-14 h-14 bg-secondary-50 dark:bg-secondary-900/30 text-secondary-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-black mb-4">Secure & Reliable</h3>
+            <p class="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+                Enterprise-grade security with API key rotation and tiered rate limiting.
+            </p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl transition-shadow group">
+            <div class="w-14 h-14 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-2xl flex items-center justify-center mb-6 group-hover:rotate-12 transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+            </div>
+            <h3 class="text-2xl font-black mb-4">Deep Insights</h3>
+            <p class="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
+                Built-in sentiment analysis and entity extraction for every article.
+            </p>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="container mx-auto px-4 py-32">
+        <div class="text-center mb-20">
+            <h2 class="text-5xl font-black mb-6 tracking-tight">Simple, Tiered Pricing</h2>
+            <p class="text-xl text-gray-500 font-medium">Choose the plan that fits your scale.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <template x-for="product in products" :key="product.id">
+                <div class="bg-white dark:bg-gray-800 rounded-[3rem] p-10 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col relative overflow-hidden group">
+                    <!-- Highlight for Advance tier -->
+                    <template x-if="product.name === 'Advance'">
+                        <div class="absolute top-0 right-0">
+                            <div class="bg-primary-500 text-white text-[10px] font-black uppercase tracking-widest px-8 py-2 rotate-45 translate-x-10 translate-y-4 shadow-lg">
+                                Popular
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="mb-8">
+                        <h3 x-text="product.name" class="text-2xl font-black mb-2 tracking-tight"></h3>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-5xl font-black" x-text="'$' + product.price"></span>
+                            <span class="text-gray-400 font-bold">/mo</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-10 flex-grow">
+                        <template x-for="feature in product.features">
+                            <div class="flex items-center gap-3">
+                                <div class="w-5 h-5 bg-green-100 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <span class="text-gray-600 dark:text-gray-400 font-medium text-sm" x-text="feature"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <button 
+                        @click="buy(product)"
+                        class="w-full py-5 rounded-2xl font-black text-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl"
+                        :class="product.name === 'Advance' ? 'bg-primary-600 text-white shadow-primary-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200'"
+                    >
+                        Choose <span x-text="product.name"></span>
+                    </button>
+                    
+                    <div class="mt-6 text-center">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-gray-400" x-text="product.quota + ' requests included'"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- FAQ / Proof Section -->
+    <section class="container mx-auto px-4 py-32 border-t border-gray-100 dark:border-gray-800">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-black mb-12 tracking-tight">Trusted by 2,000+ Teams</h2>
+            <div class="flex flex-wrap justify-center gap-12 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
+                <span class="text-3xl font-black tracking-tighter italic">TECH CORP</span>
+                <span class="text-3xl font-black tracking-tighter italic">NEWS HUB</span>
+                <span class="text-3xl font-black tracking-tighter italic">DATA FLOW</span>
+                <span class="text-3xl font-black tracking-tighter italic">API FIRST</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-gray-950 py-20 border-t border-gray-100 dark:border-gray-900">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="w-8 h-8 bg-gradient-to-tr from-primary-600 to-secondary-500 rounded-lg flex items-center justify-center text-white font-black">N</div>
+                        <span class="text-xl font-black tracking-tight">News API</span>
+                    </div>
+                    <p class="text-gray-500 dark:text-gray-400 font-medium max-w-sm">
+                        Providing the infrastructure for the next generation of news-driven applications.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-black mb-6 uppercase text-xs tracking-widest text-gray-400">Product</h4>
+                    <ul class="space-y-4 font-bold text-sm">
+                        <li><a href="#" class="hover:text-primary-600 transition">Features</a></li>
+                        <li><a href="#" class="hover:text-primary-600 transition">Pricing</a></li>
+                        <li><a href="#" class="hover:text-primary-600 transition">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-black mb-6 uppercase text-xs tracking-widest text-gray-400">Legal</h4>
+                    <ul class="space-y-4 font-bold text-sm">
+                        <li><a href="#" class="hover:text-primary-600 transition">Privacy</a></li>
+                        <li><a href="#" class="hover:text-primary-600 transition">Terms</a></li>
+                        <li><a href="#" class="hover:text-primary-600 transition">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="pt-8 border-t border-gray-100 dark:border-gray-900 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400 font-medium">
+                <p>&copy; 2026 News API Ecosystem. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-primary-600">Twitter</a>
+                    <a href="#" class="hover:text-primary-600">GitHub</a>
+                    <a href="#" class="hover:text-primary-600">Discord</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
