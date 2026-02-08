@@ -46,6 +46,11 @@ document.addEventListener('alpine:init', () => {
         activeTab: 'products', // products, orders
 
         init() {
+            // Validate lang
+            if (!['en', 'vi'].includes(this.lang)) {
+                this.lang = 'en';
+            }
+
             this.applyTheme();
             this.applyLang();
 

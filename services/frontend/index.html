@@ -37,11 +37,15 @@
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/vi.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@formkit/auto-animate@0.8.1/index.min.js"></script>
+    <!-- Load auto-animate as module and expose globally -->
+    <script type="module">
+        import autoAnimate from 'https://cdn.jsdelivr.net/npm/@formkit/auto-animate/index.min.js';
+        window.autoAnimate = autoAnimate;
+    </script>
 
     <!-- 2. Alpine Plugins -->
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs-i18n@2.4.0/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs-i18n@2.x.x/dist/cdn.min.js"></script>
 
     <!-- 3. App Logic -->
     <script src="js/config.js"></script>
@@ -205,8 +209,7 @@
                                 <label class="block text-xs font-bold text-gray-400 uppercase mb-2" x-text="$t('search_placeholder')"></label>
                                 <div class="relative">
                                     <input 
-                                        x-data 
-                                        x-model.debounce.300ms="$parent.search"
+                                        x-model.debounce.300ms="search"
                                         type="text" 
                                         class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border-none rounded-xl focus:ring-2 focus:ring-primary-500 transition" 
                                         :placeholder="$t('search_placeholder')">
