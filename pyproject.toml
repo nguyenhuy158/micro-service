@@ -21,8 +21,10 @@ warn_untyped_fields = true
 [tool.ruff]
 line-length = 88
 target-version = "py311"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "SIM", "C4"]
 ignore = ["B008"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]

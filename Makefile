@@ -11,7 +11,13 @@ test:
 	PYTHONPATH=services/payment-service:. pytest services/payment-service/tests
 
 type-check:
-	mypy services/user-service/app services/product-service/app services/order-service/app services/inventory-service/app services/payment-service/app services/docs-service/app shared
+	PYTHONPATH=services/user-service:shared mypy services/user-service/app
+	PYTHONPATH=services/product-service:shared mypy services/product-service/app
+	PYTHONPATH=services/order-service:shared mypy services/order-service/app
+	PYTHONPATH=services/inventory-service:shared mypy services/inventory-service/app
+	PYTHONPATH=services/payment-service:shared mypy services/payment-service/app
+	PYTHONPATH=services/docs-service:shared mypy services/docs-service/app
+	mypy shared
 
 lint:
 	ruff check .
