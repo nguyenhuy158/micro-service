@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 from app.models.product import Product, Category
 
 
@@ -7,8 +7,12 @@ from app.models.product import Product, Category
 async def test_create_product(client, mock_db_session):
     # Setup mock behavior
     mock_db_session.add = MagicMock()
-    mock_db_session.commit = MagicMock()
-    mock_db_session.refresh = MagicMock()
+    mock_db_session.commit = AsyncMock()
+
+    async def mock_refresh(obj):
+        obj.id = 1
+
+    mock_db_session.refresh = AsyncMock(side_effect=mock_refresh)
 
     product_data = {
         "name": "Test Product",
@@ -79,8 +83,12 @@ async def test_get_product_not_found(client, mock_db_session):
 async def test_create_category(client, mock_db_session):
     # Setup mock behavior
     mock_db_session.add = MagicMock()
-    mock_db_session.commit = MagicMock()
-    mock_db_session.refresh = MagicMock()
+    mock_db_session.commit = AsyncMock()
+
+    async def mock_refresh(obj):
+        obj.id = 1
+
+    mock_db_session.refresh = AsyncMock(side_effect=mock_refresh)
 
     category_data = {"name": "Test Category", "description": "A test category"}
 

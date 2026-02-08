@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 from unittest.mock import MagicMock, AsyncMock, patch
 from app.models.user import User
 from app.api import deps
@@ -12,6 +13,8 @@ async def test_register_user(client, mock_db_session):
         "full_name": "Test User",
     }
 
+    user_id = uuid4()
+
     # Mock behavior
     with patch(
         "app.api.v1.endpoints.auth.get_user_by_email", new_callable=AsyncMock
@@ -21,7 +24,7 @@ async def test_register_user(client, mock_db_session):
             "app.api.v1.endpoints.auth.create_user", new_callable=AsyncMock
         ) as mock_create_user:
             mock_create_user.return_value = User(
-                id="uuid-123",
+                id=user_id,
                 email=user_data["email"],
                 full_name=user_data["full_name"],
                 is_active=True,
@@ -39,8 +42,10 @@ async def test_register_user(client, mock_db_session):
 async def test_login_user(client, mock_db_session):
     login_data = {"username": "test@example.com", "password": "password123"}
 
+    user_id = uuid4()
+
     mock_user = User(
-        id="uuid-123",
+        id=user_id,
         email=login_data["username"],
         is_active=True,
         hashed_password="hashed_password",
@@ -61,8 +66,9 @@ async def test_login_user(client, mock_db_session):
 
 @pytest.mark.asyncio
 async def test_read_users_me(client, mock_db_session):
+    user_id = uuid4()
     mock_user = User(
-        id="uuid-123", email="test@example.com", full_name="Test User", is_active=True
+        id=user_id, email="test@example.com", full_name="Test User", is_active=True
     )
 
     # Override dependency
