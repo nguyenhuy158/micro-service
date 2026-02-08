@@ -9,7 +9,8 @@ This document provides essential guidelines for AI agents and developers working
 1.  **Format Code:** `make format` (Fixes style automatically using Ruff)
 2.  **Lint Code:** `make lint` (Checks for style/quality issues using Ruff)
 3.  **Run Tests:** `make test` (Ensures no regressions)
-4.  **Update OpenAPI:** If endpoints changed, ensure `docs-service` can generate the unified `openapi.json`.
+4.  **Update Version:** Based on changes, run `make patch`, `make minor`, or `make major`.
+5.  **Update OpenAPI:** If endpoints changed, ensure `docs-service` can generate the unified `openapi.json`.
 
 Do **NOT** submit or finalize your task until all relevant commands pass successfully.
 
@@ -17,15 +18,20 @@ Do **NOT** submit or finalize your task until all relevant commands pass success
 
 ## 2. Versioning (Semantic Versioning)
 
-The project follows [Semantic Versioning 2.0.0](https://semver.org/).
+The project strictly follows [Semantic Versioning 2.0.0](https://semver.org/).
 
+- **Format:** `MAJOR.MINOR.PATCH` (x.y.z)
+- **Rules:**
+    - **MAJOR:** Increment for breaking changes (backwards incompatible).
+    - **MINOR:** Increment for new backward-compatible features.
+    - **PATCH:** Increment for bug fixes and minor improvements.
 - **Global Version:** Defined in the root `pyproject.toml` under `[project].version`.
 - **Shared Version:** Defined in `shared/version.py`. This is the source of truth for all services.
 - **Service Versioning:** All microservices import their version from `shared.version.VERSION`.
 - **API Documentation:** The OpenAPI version for each service and the unified documentation always reflects the `VERSION`.
 
 **Updating Version:**
-Use the provided `make` commands to increment the version:
+Agents MUST automatically suggest the next version number and apply it using the provided `make` commands:
 - `make patch`: Bumps the patch version (e.g., 1.0.0 -> 1.0.1)
 - `make minor`: Bumps the minor version (e.g., 1.0.0 -> 1.1.0)
 - `make major`: Bumps the major version (e.g., 1.0.0 -> 2.0.0)
