@@ -1,23 +1,24 @@
 from fastapi import FastAPI
-from starlette_prometheus import metrics, PrometheusMiddleware
+from starlette.middleware.cors import CORSMiddleware
+from app.api.v1.api import api_router
+from app.core.config import settings
 
 app = FastAPI(
-    title="Inventory Service",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-app.add_middleware(PrometheusMiddleware)
-app.add_route("/metrics", metrics)
+# Set all CORS enabled origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "inventory-service"}
-
-
-@app.get("/")
-def root():
-    return {"message": "Welcome to Inventory Service"}
+async def health_check():
+    return {"status": "healthy", "service": settings.PROJECT_NAME}
