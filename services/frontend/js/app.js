@@ -29,11 +29,16 @@ const t = (key) => {
 
 document.addEventListener('alpine:init', () => {
     // 1. Initialize I18n
-    const i18n = window.Alpine.I18n || window.AlpineI18n;
-    if (i18n && window.messages) {
-        i18n.create(window.messages);
+    const i18nPlugin = window.AlpineI18n;
+    if (i18nPlugin && window.messages) {
+        Alpine.plugin(i18nPlugin);
+        const savedLang = JSON.parse(localStorage.getItem('app_lang')) || 'en';
+        i18nPlugin.create(savedLang, window.messages);
     } else {
-        console.error("I18n plugin or messages not loaded! Shimming $t to prevent crash.");
+        console.error("I18n plugin or messages not loaded! Shimming $t to prevent crash.", {
+            plugin: !!i18nPlugin,
+            messages: !!window.messages
+        });
         Alpine.magic('t', () => (key) => key);
     }
 

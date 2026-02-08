@@ -200,7 +200,7 @@
             <div x-transition>
                 
                 <!-- Products View -->
-                <div x-show="$store.ui.activeTab === 'products'" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div x-show="$store.ui.activeTab === 'products'" class="grid grid-cols-1 lg:grid-cols-4 gap-8" x-data="products">
                     
                     <!-- Sidebar/Filters -->
                     <div class="lg:col-span-1 space-y-6">
@@ -270,7 +270,7 @@
                     </div>
 
                     <!-- Products Grid -->
-                    <div class="lg:col-span-3" x-data="products">
+                    <div class="lg:col-span-3">
                         <div class="flex justify-between items-center mb-8">
                             <h2 class="text-3xl font-black" x-text="$t('products')"></h2>
                             <button @click="fetch" class="p-2 text-gray-400 hover:text-primary-600 transition flex items-center gap-2">
