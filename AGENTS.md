@@ -6,11 +6,12 @@ This document provides essential guidelines for AI agents and developers working
 
 **AFTER every significant code change, you MUST run the following commands in order:**
 
-1.  **Format Code:** `make format` (Fixes style automatically)
-2.  **Lint Code:** `make lint` (Checks for style/quality issues)
+1.  **Format Code:** `make format` (Fixes style automatically using Ruff)
+2.  **Lint Code:** `make lint` (Checks for style/quality issues using Ruff)
 3.  **Run Tests:** `make test` (Ensures no regressions)
+4.  **Update OpenAPI:** If endpoints changed, ensure `docs-service` can generate the unified `openapi.json`.
 
-Do **NOT** submit or finalize your task until all three commands pass successfully.
+Do **NOT** submit or finalize your task until all relevant commands pass successfully.
 
 ---
 
@@ -53,19 +54,16 @@ Use `pytest` directly for granular testing to save time during development.
 
 ```bash
 # Run tests for a specific service
-pytest services/product-service/tests
+PYTHONPATH=services/product-service:. pytest services/product-service/tests
 
 # Run a single test file
-pytest services/product-service/tests/test_products.py
+PYTHONPATH=services/order-service:. pytest services/order-service/tests/test_orders.py
 
 # Run a specific test case by name (substring match)
-pytest -k "test_create_product"
+pytest -k "test_create_order_success"
 
-# Run with verbose output to see test execution details
-pytest -vv
-
-# Run failed tests from the last run
-pytest --lf
+# Run with verbose output and no capture (shows print statements)
+pytest -vv -s
 ```
 
 ---
@@ -75,72 +73,64 @@ pytest --lf
 ### Architecture: Clean Architecture & Saga Pattern
 -   **Structure:** `services/<service-name>/app/`
     1.  **API (`api/`):** Handles HTTP requests/responses. Validation via Pydantic. Calls Service layer. **NO business logic here.**
-    2.  **Service (`services/`):** Contains business logic. Calls DB/Repository layer.
+    2.  **Service (`services/`):** Contains business logic (Domain logic). Calls DB/Repository layer.
     3.  **Schemas (`schemas/`):** Pydantic models for Data Transfer Objects (DTOs).
     4.  **Models (`models/`):** SQLAlchemy ORM models for Database entities.
-    5.  **DB (`db/`):** Database connection and session management.
-    6.  **Core (`core/`):** Configuration and security settings.
--   **Dependency Injection:** Use FastAPI's `Depends` for injecting dependencies (e.g., DB sessions, settings).
--   **Saga Pattern:** Use events defined in `shared/app/schemas/events.py` for inter-service communication via RabbitMQ.
+    5.  **DB (`db/`):** Database connection and session management (AsyncSession).
+    6.  **Core (`core/`):** Configuration (Pydantic Settings) and security.
+-   **Dependency Injection:** Use FastAPI's `Depends` for injecting `db` and `settings`.
+-   **Saga Pattern:** Use events defined in `shared/schemas/events.py` for inter-service communication via RabbitMQ.
 
 ### Python Coding Standards
 
 #### Imports
 -   **Order:**
-    1.  Standard Library (e.g., `typing`, `datetime`, `os`)
-    2.  Third-Party (e.g., `fastapi`, `sqlalchemy`, `pydantic`)
+    1.  Standard Library (`typing`, `uuid`, `os`)
+    2.  Third-Party (`fastapi`, `sqlalchemy`, `pydantic`, `httpx`)
     3.  Local Application (Absolute imports: `from app.core import ...`)
+    4.  Shared Library (`from shared.enums.status import ...`)
 -   **Style:** Avoid `from module import *`. Be explicit.
--   **Grouping:** Group imports logically with blank lines between groups.
 
 #### Typing (Strict)
 -   **Enforcement:** Code must pass `mypy` strict mode.
 -   **Type Hints:** Explicit type hints for **ALL** function arguments and return values.
-    ```python
-    # Good
-    async def get_user(db: AsyncSession, user_id: int) -> Optional[User]: ...
-    
-    # Bad
-    async def get_user(db, user_id): ...
-    ```
--   **Pydantic:** Use Pydantic models for all API inputs and outputs. **Do NOT** return ORM models directly from API endpoints; convert them to Pydantic schemas first.
-
-#### Formatting
--   **Tool:** `ruff` (compatible with Black).
--   **Line Length:** 88 characters.
--   **Quotes:** Double quotes `"` for strings.
--   **Trailing Commas:** Use trailing commas in multi-line lists/dicts/calls.
+-   **Pydantic:** Use Pydantic models for all API inputs and outputs. **Do NOT** return ORM models directly; convert them to Pydantic schemas using `from_attributes = True` (Pydantic v2).
 
 #### Naming Conventions
--   **Variables/Functions:** `snake_case` (e.g., `get_user_by_email`).
--   **Classes/Types:** `PascalCase` (e.g., `UserCreate`, `ProductService`).
--   **Constants:** `UPPER_CASE` (e.g., `ACCESS_TOKEN_EXPIRE_MINUTES`).
--   **Private Members:** `_prefixed` (e.g., `_verify_password`).
--   **Tests:** `test_` prefix for files and functions (e.g., `test_products.py`, `test_create_product`).
+-   **Variables/Functions:** `snake_case`.
+-   **Classes/Types:** `PascalCase`.
+-   **Constants:** `UPPER_CASE`.
+-   **Tests:** `test_` prefix for files and functions.
 
 #### Error Handling
--   **API Layer:** Use `fastapi.HTTPException` with appropriate status codes (400, 401, 403, 404, 500).
--   **Service Layer:** Raise custom exceptions (if needed) or let DB exceptions propagate to be caught by API layer or global exception handlers.
--   **Validation:** Rely on Pydantic for request validation.
+-   **API Layer:** Use `fastapi.HTTPException` with appropriate status codes (400, 401, 404, 500).
+-   **Service Layer:** Raise custom domain exceptions or let DB exceptions propagate.
+-   **Database:** Always use `AsyncSession` and `await` for `commit()`, `refresh()`, and `execute()`.
 
-#### Asynchronous Programming
--   **Async/Await:** Use `async def` for all API endpoints and DB operations.
--   **DB:** Use `await` for all SQLAlchemy async calls (`await db.execute(...)`, `await db.commit()`, `await db.refresh()`).
+### API Documentation (OpenAPI)
+-   **Update Rule:** Always verify that changes to endpoints are reflected in the auto-generated Swagger UI (`/docs`).
+-   **Unified Schema:** The `docs-service` aggregates schemas from all services. Ensure new services are added to `SERVICES` in `services/docs-service/app/main.py`.
+-   **Pydantic V2:** Use `ConfigDict` or `model_config` for Pydantic v2 configuration (e.g., `from_attributes = True`).
 
-### Documentation
--   **Docstrings:** Required for complex functions, classes, and modules. Use Google or NumPy style.
--   **API Docs:** FastAPI auto-generates Swagger UI. Ensure Pydantic models have `description` fields where helpful.
+---
 
-### Shared Library (`shared/`)
--   Reusable code (schemas, enums, utils) goes here.
+## 3. Shared Library (`shared/`)
+-   Located at `/shared` (mirrored from `shared/` in root).
+-   Contains `enums/` and `schemas/` used by multiple services.
 -   **Do not duplicate** logic across services if it belongs in `shared`.
--   Modifying `shared` requires rebuilding/checking all dependent services.
+-   When adding new event types, update `shared/schemas/events.py`.
 
 ---
 
-## 3. Tool Configuration
--   **`pyproject.toml`:** Master configuration for `mypy` and `ruff`. Do not modify unless adding global tool settings.
--   **`Makefile`:** Use for standardizing commands.
+## 4. Inter-service Communication
+-   **Synchronous:** Use `httpx.AsyncClient` for critical paths (e.g., Order -> Inventory reservation).
+-   **Asynchronous:** Use RabbitMQ for non-blocking updates (e.g., Order Placed -> Email Notification).
 
 ---
-*Generated for Cursor/Windsurf/Copilot Agents*
+
+## 5. Tool Configuration
+-   **`pyproject.toml`:** Master configuration for `mypy` and `ruff`.
+-   **`Makefile`:** Use for standardizing commands. Always set `PYTHONPATH` when running tests locally.
+
+---
+*Updated for Microservices Ecosystem - 2026*
