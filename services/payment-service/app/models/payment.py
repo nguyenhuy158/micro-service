@@ -1,11 +1,10 @@
 import uuid
-from typing import Optional
 
+from app.db.base import Base
 from sqlalchemy import UUID, Float, String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.db.base import Base
 from shared.enums.status import PaymentStatus
 
 
@@ -20,5 +19,5 @@ class Payment(Base):
     status: Mapped[PaymentStatus] = mapped_column(
         SQLEnum(PaymentStatus), default=PaymentStatus.PENDING
     )
-    transaction_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    transaction_id: Mapped[str | None] = mapped_column(String, nullable=True)
     provider: Mapped[str] = mapped_column(String, default="mock")

@@ -1,5 +1,6 @@
-import httpx
 from typing import Any
+
+import httpx
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
@@ -48,11 +49,15 @@ async def get_unified_openapi() -> Any:
                     paths = service_schema.get("paths", {})
                     for path, path_item in paths.items():
                         # Construct public path
-                        # Example: /api/v1/user/auth if internal is /auth
-                        if path == "/":
+                        # Example: /api/v1/user/auth if internal is /api/v1/auth
+                        internal_path = path
+                        if internal_path.startswith("/api/v1"):
+                            internal_path = internal_path.replace("/api/v1", "", 1)
+
+                        if internal_path == "/" or internal_path == "":
                             public_path = f"/api/v1/{service_name}"
                         else:
-                            public_path = f"/api/v1/{service_name}{path}"
+                            public_path = f"/api/v1/{service_name}{internal_path}"
 
                         unified_schema["paths"][public_path] = path_item
 

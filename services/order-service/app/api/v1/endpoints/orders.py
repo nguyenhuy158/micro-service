@@ -1,5 +1,5 @@
-from uuid import UUID
 from typing import Any
+from uuid import UUID
 
 from app.db.session import get_db
 from app.schemas.order import OrderCreate, OrderResponse, OrderUpdate

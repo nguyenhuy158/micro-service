@@ -1,11 +1,10 @@
 import uuid
-from typing import List, Optional
 
+from app.db.base import Base
 from sqlalchemy import UUID, Float, ForeignKey, String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.base import Base
 from shared.enums.status import OrderStatus
 
 
@@ -18,9 +17,9 @@ class Order(Base):
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus), default=OrderStatus.PENDING
     )
-    shipping_address: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    shipping_address: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    items: Mapped[List["OrderItem"]] = relationship(
+    items: Mapped[list["OrderItem"]] = relationship(
         "OrderItem", back_populates="order", cascade="all, delete-orphan"
     )
 

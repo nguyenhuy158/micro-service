@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -10,9 +10,9 @@ class Category(Base):
     __tablename__ = "categories"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String)
+    description: Mapped[str | None] = mapped_column(String)
 
-    products: Mapped[List["Product"]] = relationship(
+    products: Mapped[list["Product"]] = relationship(
         "Product", back_populates="category"
     )
 
@@ -20,12 +20,12 @@ class Category(Base):
 class Product(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String, index=True, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
     price: Mapped[float] = mapped_column(Float, nullable=False)
     stock: Mapped[int] = mapped_column(Integer, default=0)
-    image_url: Mapped[Optional[str]] = mapped_column(String)
+    image_url: Mapped[str | None] = mapped_column(String)
 
-    category_id: Mapped[Optional[int]] = mapped_column(
+    category_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("categories.id"), nullable=True
     )
     category: Mapped[Optional["Category"]] = relationship(
