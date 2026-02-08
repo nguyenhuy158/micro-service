@@ -25,7 +25,12 @@ The project follows [Semantic Versioning 2.0.0](https://semver.org/).
 - **API Documentation:** The OpenAPI version for each service and the unified documentation always reflects the `VERSION`.
 
 **Updating Version:**
-When making breaking changes, update the Major version. For new features (backwards-compatible), update the Minor version. For bug fixes, update the Patch version.
+Use the provided `make` commands to increment the version:
+- `make patch`: Bumps the patch version (e.g., 1.0.0 -> 1.0.1)
+- `make minor`: Bumps the minor version (e.g., 1.0.0 -> 1.1.0)
+- `make major`: Bumps the major version (e.g., 1.0.0 -> 2.0.0)
+
+Alternatively, manually update `shared/version.py` and run `make format` to sync or use the script directly.
 
 ---
 
