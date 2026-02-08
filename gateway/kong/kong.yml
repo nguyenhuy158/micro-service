@@ -7,8 +7,8 @@ services:
     routes:
       - name: user-routes
         paths:
-          - /auth
-          - /users
+          - /api/v1/auth
+          - /api/v1/users
         strip_path: false
 
   - name: product-service
@@ -16,8 +16,8 @@ services:
     routes:
       - name: product-routes
         paths:
-          - /products
-          - /categories
+          - /api/v1/products
+          - /api/v1/categories
         strip_path: false
 
   - name: order-service
@@ -25,8 +25,36 @@ services:
     routes:
       - name: order-routes
         paths:
-          - /orders
-          - /cart
+          - /api/v1/orders
+          - /api/v1/cart
+        strip_path: false
+
+  - name: inventory-service
+    url: http://inventory-service:8000
+    routes:
+      - name: inventory-routes
+        paths:
+          - /api/v1/inventory
+        strip_path: false
+
+  - name: payment-service
+    url: http://payment-service:8000
+    routes:
+      - name: payment-routes
+        paths:
+          - /api/v1/payments
+        strip_path: false
+
+  - name: docs-service
+    url: http://docs-service:8000
+    routes:
+      - name: docs-route
+        paths:
+          - /docs
+        strip_path: false # Keep /docs to serve the UI
+      - name: openapi-route
+        paths:
+          - /openapi.json
         strip_path: false
 
 plugins:
