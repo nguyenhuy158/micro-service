@@ -3,18 +3,6 @@ _transform: true
 
 services:
   - name: user-service
-    url: http://user-service:8000
-    routes:
-      - name: user-routes
-        paths:
-          - /api/v1/user
-        strip_path: true
-        # Forward /api/v1/user/auth/register -> /auth/register
-        # But user-service expects /api/v1/auth/register
-        # So we should use url: http://user-service:8000/api/v1
-        # and strip_path: true
-
-  - name: user-service
     url: http://user-service:8000/api/v1
     routes:
       - name: user-routes
