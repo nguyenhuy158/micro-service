@@ -49,7 +49,7 @@ document.addEventListener('alpine:init', () => {
     Alpine.store('ui', {
         theme: Alpine.$persist('system').as('app_theme'),
         lang: Alpine.$persist('en').as('app_lang'),
-        activeTab: 'products', // products, orders
+        activeTab: 'products', // products, orders, profile
         cartOpen: false,
         searchExpanded: false,
 
@@ -307,11 +307,167 @@ document.addEventListener('alpine:init', () => {
                 Alpine.store('ui').activeTab = 'orders';
             } catch (e) {
                 toast(t('checkout_failed') + ": " + e.message, 'error');
-            } finally {
-                this.loading = false;
-            }
+        } finally {
+            this.loading = false;
         }
-    });
+    }
+});
+
+// Profile Store
+Alpine.store('profile', {
+    loading: false,
+    totpSetup: null, // { secret, otpauth_url }
+
+    async updateInfo(full_name, email) {
+        this.loading = true;
+        try {
+            const auth = Alpine.store('auth');
+            const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.token}`
+                },
+                body: JSON.stringify({ full_name, email })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.detail || 'Update failed');
+            }
+
+            await auth.fetchMe();
+            toast(t('profile_updated'), 'success');
+        } catch (e) {
+            toast(e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async changePassword(old_password, new_password) {
+        this.loading = true;
+        try {
+            const auth = Alpine.store('auth');
+            const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me/password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.token}`
+                },
+                body: JSON.stringify({ old_password, new_password })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.detail || 'Password change failed');
+            }
+
+            toast(t('password_changed'), 'success');
+        } catch (e) {
+            toast(e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async uploadAvatar(file) {
+        this.loading = true;
+        try {
+            const auth = Alpine.store('auth');
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me/avatar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${auth.token}`
+                },
+                body: formData
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.detail || 'Avatar upload failed');
+            }
+
+            await auth.fetchMe();
+            toast(t('avatar_uploaded'), 'success');
+        } catch (e) {
+            toast(e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async setupTOTP() {
+        this.loading = true;
+        try {
+            const auth = Alpine.store('auth');
+            const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me/totp/setup`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${auth.token}` }
+            });
+
+            if (!res.ok) throw new Error('TOTP setup failed');
+
+            this.totpSetup = await res.json();
+        } catch (e) {
+            toast(e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async enableTOTP(code) {
+        this.loading = true;
+        try {
+            const auth = Alpine.store('auth');
+            const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me/totp/enable`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.token}`
+                },
+                body: JSON.stringify({ code, secret: this.totpSetup.secret })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.detail || 'TOTP enablement failed');
+            }
+
+            this.totpSetup = null;
+            await auth.fetchMe();
+            toast(t('totp_enable_success') || 'MFA Enabled', 'success');
+        } catch (e) {
+            toast(e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    },
+
+    async disableTOTP() {
+        this.loading = true;
+        try {
+            const auth = Alpine.store('auth');
+            const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me/totp/disable`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${auth.token}` }
+            });
+
+            if (!res.ok) throw new Error('TOTP disablement failed');
+
+            await auth.fetchMe();
+            toast(t('totp_disable_success') || 'MFA Disabled', 'info');
+        } catch (e) {
+            toast(e.message, 'error');
+        } finally {
+            this.loading = false;
+        }
+    }
+});
+
 
     // Products Data Component
     Alpine.data('products', () => ({

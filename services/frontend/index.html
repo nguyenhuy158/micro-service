@@ -111,6 +111,12 @@
                             class="transition-all"
                             x-text="$t('my_orders')">
                         </button>
+                        <button 
+                            @click="$store.ui.activeTab = 'profile'" 
+                            :class="$store.ui.activeTab === 'profile' ? 'text-brand-accent' : 'hover:text-brand-white'"
+                            class="transition-all"
+                            x-text="$t('profile')">
+                        </button>
                         <a 
                             href="news-api.html" 
                             class="hover:text-brand-white transition-all">
@@ -146,106 +152,171 @@
                                 <p x-text="$store.auth.user?.full_name" class="text-xs font-bold"></p>
                                 <p class="text-[9px] font-mono text-brand-accent tracking-widest uppercase">Connected</p>
                             </div>
+                            <div @click="$store.ui.activeTab = 'profile'" class="w-8 h-8 border border-brand-border overflow-hidden cursor-pointer hover:border-brand-accent transition">
+                                <template x-if="$store.auth.user?.avatar_url">
+                                    <img :src="$store.auth.user.avatar_url.startsWith('http') ? $store.auth.user.avatar_url : API_BASE_URL + '/api/v1/user' + $store.auth.user.avatar_url" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all">
+                                </template>
+                                <template x-if="!$store.auth.user?.avatar_url">
+                                    <div class="w-full h-full flex items-center justify-center bg-brand-muted text-[10px] font-bold text-brand-white/20">
+                                        <span x-text="$store.auth.user?.full_name ? $store.auth.user.full_name[0] : 'U'"></span>
+                                    </div>
+                                </template>
+                            </div>
                             <button @click="$store.auth.logout()" class="w-8 h-8 border border-brand-border flex items-center justify-center hover:border-red-500 hover:text-red-500 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
                             </button>
+                    </div>
+                </div>
+
+                <!-- Profile View -->
+                <div x-show="$store.ui.activeTab === 'profile'" x-data="{ 
+                    subTab: 'info',
+                    infoForm: { full_name: $store.auth.user?.full_name, email: $store.auth.user?.email },
+                    passForm: { old: '', new: '' },
+                    totpCode: ''
+                }" class="max-w-4xl mx-auto">
+                    <div class="mb-16">
+                        <h2 class="font-serif text-6xl italic font-black tracking-tighter mb-4" x-text="$t('profile')"></h2>
+                        <div class="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-brand-white/40 border-b border-brand-border">
+                            <button @click="subTab = 'info'" :class="subTab === 'info' ? 'text-brand-accent border-b border-brand-accent' : ''" class="pb-4 transition" x-text="$t('update_profile')"></button>
+                            <button @click="subTab = 'security'" :class="subTab === 'security' ? 'text-brand-accent border-b border-brand-accent' : ''" class="pb-4 transition" x-text="$t('totp_setup')"></button>
+                            <button @click="subTab = 'avatar'" :class="subTab === 'avatar' ? 'text-brand-accent border-b border-brand-accent' : ''" class="pb-4 transition" x-text="$t('avatar')"></button>
                         </div>
                     </div>
-                </template>
-            </div>
-        </div>
-    </nav>
 
-    <main class="container mx-auto px-6 py-12">
-
-        <!-- Auth Section -->
-        <template x-if="!$store.auth.isAuthenticated">
-            <div class="max-w-md mx-auto mt-20">
-                <div class="bg-brand-muted/50 border border-brand-border p-12 relative overflow-hidden">
-                    <div class="relative z-10">
-                        <!-- Login -->
-                        <div x-show="$store.auth.view === 'login'" x-transition>
-                            <div class="mb-10 text-center">
-                                <h2 class="font-serif text-4xl italic font-black mb-2" x-text="$t('sign_in')"></h2>
-                                <p class="font-mono text-[10px] text-brand-white/40 uppercase tracking-widest" x-text="$t('welcome_back')"></p>
-                            </div>
-
-                            <form x-data="{ email: '', password: '' }" @submit.prevent="$store.auth.login(email, password)" class="space-y-6">
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-[0.2em] block mb-2" x-text="$t('email')"></label>
-                                        <input x-model="email" type="email" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent transition outline-none" required placeholder="system@node.local">
-                                    </div>
-                                    <div>
-                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-[0.2em] block mb-2" x-text="$t('password')"></label>
-                                        <input x-model="password" type="password" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent transition outline-none" required placeholder="••••••••">
-                                    </div>
+                    <!-- Info Tab -->
+                    <div x-show="subTab === 'info'" class="space-y-12">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 bg-brand-muted/20 border border-brand-border p-12">
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('full_name')"></label>
+                                    <input x-model="infoForm.full_name" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
                                 </div>
-                                
-                                <button type="submit" class="w-full bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 text-xs hover:bg-brand-accent transition-colors">
-                                    Authorize Access
+                                <div>
+                                    <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('email')"></label>
+                                    <input x-model="infoForm.email" type="email" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                </div>
+                                <button @click="$store.profile.updateInfo(infoForm.full_name, infoForm.email)" class="bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 px-8 text-[10px] hover:bg-brand-accent transition">
+                                    <span x-show="!$store.profile.loading" x-text="$t('save_changes')"></span>
+                                    <span x-show="$store.profile.loading" class="animate-spin inline-block">↻</span>
                                 </button>
-                            </form>
-
-                            <div class="relative my-10 flex items-center justify-center">
-                                <div class="absolute w-full h-[1px] bg-brand-border"></div>
-                                <span class="relative bg-brand-black px-4 font-mono text-[8px] text-brand-white/30 uppercase tracking-widest">or initialize via SSO</span>
                             </div>
+                            <div class="flex flex-col justify-center border-l border-brand-border pl-12">
+                                <p class="font-mono text-[10px] text-brand-white/20 uppercase leading-relaxed">
+                                    Identity records are stored in the core kernel database. Any changes to the primary email protocol will require a re-authorization of the SSO modules.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div id="google-login-btn" class="flex justify-center grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition"></div>
-
-                            <div class="mt-12 text-center">
-                                <button @click="$store.auth.view = 'register'" class="font-mono text-[10px] text-brand-white/40 hover:text-brand-accent transition uppercase tracking-widest underline decoration-brand-border">
-                                    Initialize New Identity
-                                </button>
+                    <!-- Security Tab (Password & TOTP) -->
+                    <div x-show="subTab === 'security'" class="space-y-12">
+                        <!-- Password Change -->
+                        <div class="bg-brand-muted/20 border border-brand-border p-12">
+                            <h3 class="font-serif text-2xl italic font-black mb-8" x-text="$t('change_password')"></h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('old_password')"></label>
+                                        <input x-model="passForm.old" type="password" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('new_password')"></label>
+                                        <input x-model="passForm.new" type="password" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <button @click="$store.profile.changePassword(passForm.old, passForm.new); passForm.old = ''; passForm.new = '';" class="bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 px-8 text-[10px] hover:bg-brand-accent transition">
+                                        Update Access Key
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Register -->
-                        <div x-show="$store.auth.view === 'register'" x-transition>
-                            <div class="mb-10 text-center">
-                                <h2 class="font-serif text-4xl italic font-black mb-2" x-text="$t('sign_up')"></h2>
-                                <p class="font-mono text-[10px] text-brand-white/40 uppercase tracking-widest">Protocol Enrollment</p>
+                        <!-- TOTP Management -->
+                        <div class="bg-brand-muted/20 border border-brand-border p-12">
+                            <div class="flex justify-between items-start mb-8">
+                                <div>
+                                    <h3 class="font-serif text-2xl italic font-black mb-2" x-text="$t('totp_setup')"></h3>
+                                    <p class="font-mono text-[10px] text-brand-white/40 uppercase tracking-widest">Multi-Factor Authentication Protocol</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span :class="$store.auth.user?.is_totp_enabled ? 'text-brand-accent' : 'text-brand-white/20'" class="text-[9px] font-bold font-mono uppercase tracking-widest" x-text="$store.auth.user?.is_totp_enabled ? 'ACTIVE' : 'INACTIVE'"></span>
+                                    <div :class="$store.auth.user?.is_totp_enabled ? 'bg-brand-accent' : 'bg-brand-white/20'" class="w-2 h-2 rounded-full"></div>
+                                </div>
                             </div>
 
-                            <form x-data="{ email: '', password: '', full_name: '' }" @submit.prevent="$store.auth.register({email, password, full_name})" class="space-y-6">
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-[0.2em] block mb-2" x-text="$t('full_name')"></label>
-                                        <input x-model="full_name" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent transition outline-none" required placeholder="Identity Name">
+                            <template x-if="!$store.auth.user?.is_totp_enabled && !$store.profile.totpSetup">
+                                <button @click="$store.profile.setupTOTP()" class="border border-brand-accent text-brand-accent font-black uppercase tracking-widest py-4 px-8 text-[10px] hover:bg-brand-accent hover:text-brand-black transition">
+                                    Initialize MFA Hardware
+                                </button>
+                            </template>
+
+                            <template x-if="$store.profile.totpSetup">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center" x-transition>
+                                    <div class="bg-white p-4 w-48 h-48 mx-auto">
+                                        <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent($store.profile.totpSetup.otpauth_url)" alt="QR Code">
                                     </div>
-                                    <div>
-                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-[0.2em] block mb-2" x-text="$t('email')"></label>
-                                        <input x-model="email" type="email" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent transition outline-none" required placeholder="system@node.local">
-                                    </div>
-                                    <div>
-                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-[0.2em] block mb-2" x-text="$t('password')"></label>
-                                        <input x-model="password" type="password" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent transition outline-none" required placeholder="••••••••">
+                                    <div class="space-y-6">
+                                        <div>
+                                            <p class="font-mono text-[10px] text-brand-white/40 mb-2 uppercase tracking-widest" x-text="$t('totp_secret')"></p>
+                                            <code class="block bg-brand-black border border-brand-border p-3 font-mono text-xs text-brand-accent" x-text="$store.profile.totpSetup.secret"></code>
+                                        </div>
+                                        <div>
+                                            <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('totp_code')"></label>
+                                            <input x-model="totpCode" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition" placeholder="000000">
+                                        </div>
+                                        <div class="flex gap-4">
+                                            <button @click="$store.profile.enableTOTP(totpCode); totpCode = '';" class="flex-grow bg-brand-accent text-brand-black font-black uppercase tracking-widest py-4 text-[10px] hover:bg-white transition">
+                                                Confirm & Lock
+                                            </button>
+                                            <button @click="$store.profile.totpSetup = null" class="px-6 border border-brand-border hover:text-red-500 hover:border-red-500 transition font-mono text-[10px] uppercase">Abort</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <button type="submit" class="w-full bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 text-xs hover:bg-brand-accent transition-colors">
-                                    Register Node
-                                </button>
-                            </form>
+                            </template>
 
-                            <div class="mt-12 text-center">
-                                <button @click="$store.auth.view = 'login'" class="font-mono text-[10px] text-brand-white/40 hover:text-brand-accent transition uppercase tracking-widest underline decoration-brand-border">
-                                    Existing Access Key
+                            <template x-if="$store.auth.user?.is_totp_enabled">
+                                <button @click="if(confirm('Terminate MFA Protocol?')) $store.profile.disableTOTP()" class="border border-red-500/30 text-red-500/50 hover:bg-red-500 hover:text-brand-white font-black uppercase tracking-widest py-4 px-8 text-[10px] transition">
+                                    Disable MFA Node
                                 </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Avatar Tab -->
+                    <div x-show="subTab === 'avatar'" class="space-y-12">
+                        <div class="bg-brand-muted/20 border border-brand-border p-12">
+                            <div class="flex flex-col md:flex-row gap-12 items-center">
+                                <div class="w-48 h-48 bg-brand-black border border-brand-border relative group overflow-hidden">
+                                    <template x-if="$store.auth.user?.avatar_url">
+                                        <img :src="$store.auth.user.avatar_url.startsWith('http') ? $store.auth.user.avatar_url : API_BASE_URL + '/api/v1/user' + $store.auth.user.avatar_url" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500">
+                                    </template>
+                                    <template x-if="!$store.auth.user?.avatar_url">
+                                        <div class="w-full h-full flex items-center justify-center font-serif text-6xl italic font-black text-brand-white/5">
+                                            ID
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="flex-grow space-y-6">
+                                    <div>
+                                        <h3 class="font-serif text-2xl italic font-black mb-2" x-text="$t('upload_avatar')"></h3>
+                                        <p class="font-mono text-[10px] text-brand-white/40 uppercase tracking-widest">Protocol Visual Identification</p>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="file" accept="image/*" @change="$store.profile.uploadAvatar($event.target.files[0])" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                        <div class="border border-dashed border-brand-border py-8 px-12 text-center group-hover:border-brand-accent transition">
+                                            <span class="font-mono text-[9px] uppercase tracking-widest text-brand-white/40">Drop Visual ID Stream or Click to Select</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </template>
 
-        <!-- Authenticated Content -->
-        <template x-if="$store.auth.isAuthenticated">
-            <div x-transition class="space-y-12">
-                
                 <!-- Products View -->
+
                 <div x-show="$store.ui.activeTab === 'products'" x-data="products">
                     
                     <!-- View Header -->

@@ -3,6 +3,16 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from shared.schemas.api_key import ApiKeyResponse
 
+__all__ = [
+    "InventoryBase",
+    "InventoryCreate",
+    "InventoryUpdate",
+    "InventoryResponse",
+    "StockReservation",
+    "ApiKeyCreate",
+    "ApiKeyResponse",
+]
+
 
 class InventoryBase(BaseModel):
     product_id: UUID
