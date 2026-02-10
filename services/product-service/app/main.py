@@ -4,25 +4,22 @@ from typing import Any
 
 from fastapi import FastAPI
 
-from app.api.v1.endpoints import products
-from app.core.config import settings
-from app.db.base import Base
-from app.db.init_db import init_db
-from app.db.session import SessionLocal, engine
+from app.infrastructure.config import settings
+from app.infrastructure.db.base import Base
+from app.infrastructure.db.init_db import init_db
+from app.infrastructure.db.session import SessionLocal, engine
+from app.presentation.api import api_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup: Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Seed data
     async with SessionLocal() as db:
         await init_db(db)
 
     yield
-    # Shutdown
     await engine.dispose()
 
 
@@ -34,7 +31,7 @@ app = FastAPI(
 )
 
 
-app.include_router(products.router, prefix=settings.API_V1_STR, tags=["products"])
+app.include_router(api_router, prefix=settings.API_V1_STR, tags=["products"])
 
 
 @app.get("/health")

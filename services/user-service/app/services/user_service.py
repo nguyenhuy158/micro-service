@@ -1,120 +1,102 @@
 from typing import Any
 
-import pyotp
-from app.core.security import get_password_hash, verify_password
-from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+
+from app.infrastructure.persistence.repositories.user_repository import (
+    SqlAlchemyUserRepository,
+)
+from app.infrastructure.security.password_hasher import BcryptPasswordHasher
+from app.infrastructure.security.totp_service import PyotpTotpService
+
+_hasher = BcryptPasswordHasher()
+_totp = PyotpTotpService()
 
 
-async def get_user(db: AsyncSession, user_id: Any) -> User | None:
-    result = await db.execute(select(User).filter(User.id == user_id))
-    return result.scalars().first()
+async def get_user(db: AsyncSession, user_id: Any) -> Any | None:
+    repo = SqlAlchemyUserRepository(db)
+    return await repo.get_by_id(user_id)
 
 
-async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
-    result = await db.execute(select(User).filter(User.email == email))
-    return result.scalars().first()
+async def get_user_by_email(db: AsyncSession, email: str) -> Any | None:
+    repo = SqlAlchemyUserRepository(db)
+    return await repo.get_by_email(email)
 
 
-async def get_user_by_google_id(db: AsyncSession, google_id: str) -> User | None:
-    result = await db.execute(select(User).filter(User.google_id == google_id))
-    return result.scalars().first()
+async def get_user_by_google_id(db: AsyncSession, google_id: str) -> Any | None:
+    repo = SqlAlchemyUserRepository(db)
+    return await repo.get_by_google_id(google_id)
 
 
-async def create_user(db: AsyncSession, user_in: UserCreate) -> User:
-    hashed_password = get_password_hash(user_in.password)
-    db_user = User(
+async def create_user(db: AsyncSession, user_in: Any) -> Any:
+    repo = SqlAlchemyUserRepository(db)
+    hashed_password = _hasher.hash(user_in.password)
+    return await repo.create(
         email=user_in.email,
         hashed_password=hashed_password,
         full_name=user_in.full_name,
         role=user_in.role,
         is_active=True,
     )
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
 
 
 async def create_user_google(
     db: AsyncSession, email: str, google_id: str, full_name: str | None = None
-) -> User:
-    db_user = User(
+) -> Any:
+    repo = SqlAlchemyUserRepository(db)
+    return await repo.create(
         email=email,
         google_id=google_id,
         full_name=full_name,
+        hashed_password=None,
+        role=None,
         is_active=True,
-        hashed_password=None,  # No password for Google users
     )
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
 
 
-async def authenticate_user(db: AsyncSession, email: str, password: str) -> User | None:
-    user = await get_user_by_email(db, email)
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> Any | None:
+    repo = SqlAlchemyUserRepository(db)
+    user = await repo.get_by_email(email)
     if not user or not user.hashed_password:
         return None
-    if not verify_password(password, user.hashed_password):
+    if not _hasher.verify(password, user.hashed_password):
         return None
     return user
 
 
-async def update_user(db: AsyncSession, db_user: User, user_in: UserUpdate) -> User:
+async def update_user(db: AsyncSession, db_user: Any, user_in: Any) -> Any:
+    repo = SqlAlchemyUserRepository(db)
     update_data = user_in.model_dump(exclude_unset=True)
     if update_data.get("password"):
-        hashed_password = get_password_hash(update_data["password"])
-        db_user.hashed_password = hashed_password
+        update_data["hashed_password"] = _hasher.hash(update_data["password"])
         del update_data["password"]
-
-    for field, value in update_data.items():
-        setattr(db_user, field, value)
-
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+    return await repo.update(db_user, **update_data)
 
 
 async def update_user_password(
-    db: AsyncSession, db_user: User, new_password: str
-) -> User:
-    db_user.hashed_password = get_password_hash(new_password)
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+    db: AsyncSession, db_user: Any, new_password: str
+) -> Any:
+    repo = SqlAlchemyUserRepository(db)
+    hashed = _hasher.hash(new_password)
+    return await repo.update(db_user, hashed_password=hashed)
 
 
 def generate_totp_secret() -> str:
-    return pyotp.random_base32()
+    return _totp.generate_secret()
 
 
 def get_totp_uri(email: str, secret: str, issuer_name: str = "MicroShop") -> str:
-    return pyotp.totp.TOTP(secret).provisioning_uri(name=email, issuer_name=issuer_name)
+    return _totp.get_uri(email, secret, issuer_name)
 
 
 def verify_totp_code(secret: str, code: str) -> bool:
-    totp = pyotp.totp.TOTP(secret)
-    return totp.verify(code)
+    return _totp.verify_code(secret, code)
 
 
-async def enable_totp(db: AsyncSession, db_user: User, secret: str) -> User:
-    db_user.totp_secret = secret
-    db_user.is_totp_enabled = True
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+async def enable_totp(db: AsyncSession, db_user: Any, secret: str) -> Any:
+    repo = SqlAlchemyUserRepository(db)
+    return await repo.update(db_user, totp_secret=secret, is_totp_enabled=True)
 
 
-async def disable_totp(db: AsyncSession, db_user: User) -> User:
-    db_user.totp_secret = None
-    db_user.is_totp_enabled = False
-    db.add(db_user)
-    await db.commit()
-    await db.refresh(db_user)
-    return db_user
+async def disable_totp(db: AsyncSession, db_user: Any) -> Any:
+    repo = SqlAlchemyUserRepository(db)
+    return await repo.update(db_user, totp_secret=None, is_totp_enabled=False)

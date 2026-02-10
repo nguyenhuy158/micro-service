@@ -1,61 +1,57 @@
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 
-from app.models.product import Category, Product
-from app.schemas.product import CategoryCreate, ProductCreate
+from app.application.use_cases.create_category import CreateCategoryUseCase
+from app.application.use_cases.create_product import CreateProductUseCase
+from app.application.use_cases.get_product import GetProductUseCase
+from app.application.use_cases.list_categories import ListCategoriesUseCase
+from app.application.use_cases.list_products import ListProductsUseCase
+from app.infrastructure.persistence.models.product import Category, Product
+from app.infrastructure.persistence.repositories.category_repository import (
+    SqlAlchemyCategoryRepository,
+)
+from app.infrastructure.persistence.repositories.product_repository import (
+    SqlAlchemyProductRepository,
+)
+from app.presentation.schemas.product import CategoryCreate, ProductCreate
 
 
 class ProductService:
     async def create_product(
         self, db: AsyncSession, product_in: ProductCreate
     ) -> Product:
-        db_product = Product(**product_in.model_dump())
-        db.add(db_product)
-        await db.commit()
-        await db.refresh(db_product)
-        return db_product
+        repo = SqlAlchemyProductRepository(db)
+        use_case = CreateProductUseCase(repo)
+        return await use_case.execute(product_in.model_dump())
 
     async def get_products(
         self, db: AsyncSession, skip: int = 0, limit: int = 100
     ) -> list[Product]:
-        query = (
-            select(Product)
-            .options(selectinload(Product.category))
-            .offset(skip)
-            .limit(limit)
-        )
-        result = await db.execute(query)
-        return list(result.scalars().all())
+        repo = SqlAlchemyProductRepository(db)
+        use_case = ListProductsUseCase(repo)
+        return await use_case.execute(skip, limit)
 
     async def get_product(
         self, db: AsyncSession, product_id: uuid.UUID
     ) -> Product | None:
-        query = (
-            select(Product)
-            .options(selectinload(Product.category))
-            .where(Product.id == product_id)
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
+        repo = SqlAlchemyProductRepository(db)
+        use_case = GetProductUseCase(repo)
+        return await use_case.execute(product_id)
 
     async def create_category(
         self, db: AsyncSession, category_in: CategoryCreate
     ) -> Category:
-        db_category = Category(**category_in.model_dump())
-        db.add(db_category)
-        await db.commit()
-        await db.refresh(db_category)
-        return db_category
+        repo = SqlAlchemyCategoryRepository(db)
+        use_case = CreateCategoryUseCase(repo)
+        return await use_case.execute(category_in.model_dump())
 
     async def get_categories(
         self, db: AsyncSession, skip: int = 0, limit: int = 100
     ) -> list[Category]:
-        query = select(Category).offset(skip).limit(limit)
-        result = await db.execute(query)
-        return list(result.scalars().all())
+        repo = SqlAlchemyCategoryRepository(db)
+        use_case = ListCategoriesUseCase(repo)
+        return await use_case.execute(skip, limit)
 
 
 product_service = ProductService()

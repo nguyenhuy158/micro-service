@@ -1,6 +1,6 @@
 # Microservice Ecosystem
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)
 
 A modular microservice architecture built with FastAPI, Kong Gateway, and RabbitMQ.
 
