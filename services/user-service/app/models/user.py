@@ -17,6 +17,9 @@ class User(Base):
     full_name: Mapped[str | None] = mapped_column(String, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     google_id: Mapped[str | None] = mapped_column(String, unique=True, index=True)
+    avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
+    totp_secret: Mapped[str | None] = mapped_column(String, nullable=True)
+    is_totp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False), default=UserRole.CUSTOMER
     )

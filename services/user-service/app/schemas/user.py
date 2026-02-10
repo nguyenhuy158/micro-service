@@ -10,6 +10,7 @@ class UserBase(BaseModel):
     email: EmailStr | None = None
     is_active: bool | None = True
     full_name: str | None = None
+    avatar_url: str | None = None
     role: UserRole | None = UserRole.CUSTOMER
 
 
@@ -33,7 +34,22 @@ class UserInDBBase(UserBase):
 
 # Additional properties to return via API
 class UserResponse(UserInDBBase):
-    pass
+    is_totp_enabled: bool
+
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
+
+
+class TOTPSetup(BaseModel):
+    secret: str
+    otpauth_url: str
+
+
+class TOTPVerify(BaseModel):
+    code: str
+    secret: str | None = None
 
 
 class GoogleLogin(BaseModel):

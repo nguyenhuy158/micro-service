@@ -1,9 +1,11 @@
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from starlette_prometheus import PrometheusMiddleware, metrics
 
 from app.api.api import api_router
@@ -49,6 +51,13 @@ app.add_middleware(
 
 app.add_middleware(PrometheusMiddleware)
 app.add_route("/metrics", metrics)
+
+# Ensure static directory exists
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if not os.path.exists(static_dir):
+    os.makedirs(os.path.join(static_dir, "avatars"), exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

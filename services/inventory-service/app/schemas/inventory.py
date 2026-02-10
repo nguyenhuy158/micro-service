@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+from shared.schemas.api_key import ApiKeyResponse
 
 
 class InventoryBase(BaseModel):
