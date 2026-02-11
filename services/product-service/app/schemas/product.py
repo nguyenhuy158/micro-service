@@ -1,36 +1,17 @@
-import uuid
+from app.presentation.schemas.product import (
+    Category,
+    CategoryBase,
+    CategoryCreate,
+    Product,
+    ProductBase,
+    ProductCreate,
+)
 
-from pydantic import BaseModel, ConfigDict
-
-
-class CategoryBase(BaseModel):
-    name: str
-    description: str | None = None
-
-
-class CategoryCreate(CategoryBase):
-    pass
-
-
-class Category(CategoryBase):
-    id: uuid.UUID
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ProductBase(BaseModel):
-    name: str
-    description: str | None = None
-    price: float
-    stock: int = 0
-    image_url: str | None = None
-    category_id: uuid.UUID | None = None
-
-
-class ProductCreate(ProductBase):
-    pass
-
-
-class Product(ProductBase):
-    id: uuid.UUID
-    category: Category | None = None
-    model_config = ConfigDict(from_attributes=True)
+__all__ = [
+    "Category",
+    "CategoryBase",
+    "CategoryCreate",
+    "Product",
+    "ProductBase",
+    "ProductCreate",
+]

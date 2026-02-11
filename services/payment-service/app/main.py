@@ -3,14 +3,13 @@ from typing import Any
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.v1.api import api_router
-from app.core.config import settings
+from app.infrastructure.config import settings
+from app.presentation.api import api_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME, version=settings.VERSION, openapi_url="/openapi.json"
 )
 
-# Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

@@ -1,6 +1,6 @@
 # Microservice Ecosystem
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
 
 A modular microservice architecture built with FastAPI, Kong Gateway, and RabbitMQ.
 
@@ -121,6 +121,7 @@ docker-compose up -d --build
 
 # 3. Access Services
 # - Gateway: http://localhost:8000
+# - Kong Manager (UI): http://localhost:8003
 # - Grafana: http://localhost:3001
 # - Jaeger: http://localhost:16686
 # - Prometheus: http://localhost:9090

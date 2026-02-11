@@ -14,7 +14,9 @@ async def test_login_google_success(client):
         "aud": "your-google-client-id",
     }
 
-    with patch("app.services.google_auth.httpx.AsyncClient.get") as mock_get:
+    with patch(
+        "app.infrastructure.clients.google_auth.httpx.AsyncClient.get"
+    ) as mock_get:
         mock_get.return_value = Response(200, json=mock_google_data)
 
         # Mock user_service functions to avoid DB issues in mock session
@@ -48,7 +50,9 @@ async def test_login_google_success(client):
 
 @pytest.mark.asyncio
 async def test_login_google_invalid_token(client):
-    with patch("app.services.google_auth.httpx.AsyncClient.get") as mock_get:
+    with patch(
+        "app.infrastructure.clients.google_auth.httpx.AsyncClient.get"
+    ) as mock_get:
         mock_get.return_value = Response(401, json={"error": "invalid_token"})
 
         response = await client.post(

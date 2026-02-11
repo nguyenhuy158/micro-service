@@ -5,11 +5,11 @@ from typing import Any
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app.api.v1.api import api_router
-from app.core.config import settings
-from app.db.base import Base
-from app.db.init_db import init_db
-from app.db.session import SessionLocal, engine
+from app.infrastructure.config import settings
+from app.infrastructure.db.base import Base
+from app.infrastructure.db.init_db import init_db
+from app.infrastructure.db.session import SessionLocal, engine
+from app.presentation.api import api_router
 
 
 @asynccontextmanager

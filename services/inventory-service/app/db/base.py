@@ -1,8 +1,3 @@
-from sqlalchemy.orm import DeclarativeBase, declared_attr
+from app.infrastructure.db.base import Base
 
-
-class Base(DeclarativeBase):
-    # Generate __tablename__ automatically
-    @declared_attr.directive
-    def __tablename__(self) -> str:
-        return self.__name__.lower() + "s"
+__all__ = ["Base"]

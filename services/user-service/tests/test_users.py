@@ -29,6 +29,7 @@ async def test_register_user(client, mock_db_session):
                 email=user_data["email"],
                 full_name=user_data["full_name"],
                 is_active=True,
+                is_totp_enabled=False,
             )
 
             response = await client.post("/api/v1/auth/register", json=user_data)
@@ -50,6 +51,7 @@ async def test_login_user(client, mock_db_session):
         email=login_data["username"],
         is_active=True,
         hashed_password="hashed_password",
+        is_totp_enabled=False,
     )
 
     with patch(
@@ -69,7 +71,11 @@ async def test_login_user(client, mock_db_session):
 async def test_read_users_me(client, mock_db_session):
     user_id = uuid4()
     mock_user = User(
-        id=user_id, email="test@example.com", full_name="Test User", is_active=True
+        id=user_id,
+        email="test@example.com",
+        full_name="Test User",
+        is_active=True,
+        is_totp_enabled=False,
     )
 
     # Override dependency

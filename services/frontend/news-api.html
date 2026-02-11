@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News API — Global Intelligence at Scale</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Work+Sans:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'serif': ['"Playfair Display"', 'serif'],
+                        'sans': ['"Work Sans"', 'sans-serif'],
+                        'mono': ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            black: '#0a0a0a',
+                            white: '#fcfcfc',
+                            accent: '#00f5ff', // Electric Cyan
+                            muted: '#1a1a1a',
+                        }
+                    },
+                    animation: {
+                        'reveal': 'reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        reveal: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        ::selection { background: #00f5ff; color: #0a0a0a; }
+        
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3ExternalFilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.05;
+        }
+
+        .border-tech {
+            border-image: linear-gradient(to right, #00f5ff, transparent) 1;
+        }
+
+        .text-outline {
+            -webkit-text-stroke: 1px #00f5ff;
+            color: transparent;
+        }
+
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+    </style>
+
+    <!-- Libraries -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-brand-black text-brand-white font-sans selection:bg-brand-accent selection:text-brand-black" 
+      x-data="{
+        scrolled: false,
+        products: [
+            {
+                id: 'starter',
+                name: 'Starter',
+                price: 9.99,
+                description: 'Perfect for indie hackers and small side projects.',
+                quota: '1,000 requests',
+                features: ['Global News Access', 'Real-time Headlines', 'Standard Support']
+            },
+            {
+                id: 'advance',
+                name: 'Advance',
+                price: 49.99,
+                description: 'Scale your application with priority data and analytics.',
+                quota: '10,000 requests',
+                features: ['Full Archives', 'Priority Support', 'News Analytics', 'Sentiment Analysis']
+            },
+            {
+                id: 'vip',
+                name: 'VIP',
+                price: 199.99,
+                description: 'Enterprise grade infrastructure for high-traffic platforms.',
+                quota: '100,000 requests',
+                features: ['Real-time Feed', '24/7 Support', 'Custom Webhooks', 'Raw Data Access']
+            }
+        ],
+        buy(product) {
+            Toastify({
+                text: `Selected ${product.name} — Redirecting to Dashboard`,
+                duration: 2000,
+                gravity: 'top',
+                position: 'center',
+                style: { background: '#00f5ff', color: '#0a0a0a', fontWeight: '800' }
+            }).showToast();
+            setTimeout(() => window.location.href = 'index.html', 1500);
+        }
+      }"
+      @scroll.window="scrolled = (window.pageYOffset > 50)"
+>
+    <!-- Background Texture -->
+    <div class="fixed inset-0 noise-bg pointer-events-none z-[100]"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-[90] transition-all duration-500"
+         :class="scrolled ? 'bg-brand-black/80 backdrop-blur-md py-4 border-b border-brand-accent/20' : 'bg-transparent py-8'">
+        <div class="container mx-auto px-6 flex items-center justify-between">
+            <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="w-10 h-10 border-2 border-brand-accent flex items-center justify-center font-mono font-bold text-brand-accent">
+                    N
+                </div>
+                <h1 class="font-serif text-2xl italic font-black tracking-tighter">NewsAPI.</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-12 font-mono text-xs uppercase tracking-widest text-brand-white/60">
+                <a href="#features" class="hover:text-brand-accent transition">Intelligence</a>
+                <a href="#pricing" class="hover:text-brand-accent transition">Infrastructure</a>
+                <a href="index.html" class="px-6 py-2 border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-brand-black transition">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden pt-32">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-6xl opacity-20 blur-[100px] pointer-events-none">
+            <div class="absolute top-10 right-10 w-96 h-96 bg-brand-accent rounded-full animate-float"></div>
+            <div class="absolute bottom-10 left-10 w-80 h-80 bg-brand-accent rounded-full animate-float" style="animation-delay: -2s"></div>
+        </div>
+
+        <div class="relative z-10 text-center space-y-8 max-w-5xl">
+            <p class="font-mono text-xs uppercase tracking-[0.5em] text-brand-accent opacity-0 animate-reveal">Global Data Stream v2.0</p>
+            <h1 class="font-serif text-7xl md:text-9xl italic font-black leading-[0.9] opacity-0 animate-reveal stagger-1">
+                The World <br/>
+                <span class="text-outline">Unfolded.</span>
+            </h1>
+            <p class="max-w-xl mx-auto font-sans text-lg md:text-xl text-brand-white/60 leading-relaxed opacity-0 animate-reveal stagger-2">
+                Programmatic access to the world's most comprehensive news data lake. 80,000+ sources, millions of articles, sub-second latency.
+            </p>
+            <div class="pt-10 flex flex-col md:flex-row items-center justify-center gap-6 opacity-0 animate-reveal stagger-3">
+                <a href="#pricing" class="group relative px-10 py-5 bg-brand-accent text-brand-black font-black text-lg uppercase tracking-widest transition-transform hover:scale-105">
+                    Deploy Solution
+                </a>
+                <button class="font-mono text-xs uppercase tracking-widest hover:text-brand-accent transition border-b border-brand-white/20 pb-2">
+                    Read Documentation
+                </button>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 font-mono text-[10px] uppercase tracking-widest text-brand-white/30 flex flex-col items-center gap-4">
+            <span class="rotate-90 origin-left translate-x-1.5">Scroll</span>
+            <div class="w-[1px] h-12 bg-gradient-to-b from-brand-accent to-transparent"></div>
+        </div>
+    </header>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-32 container mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+            <div class="md:col-span-5 space-y-6">
+                <h2 class="font-serif text-5xl italic font-black">Built for the next <br/> epoch of apps.</h2>
+                <div class="w-24 h-[1px] bg-brand-accent"></div>
+                <p class="text-brand-white/60 leading-relaxed">
+                    We don't just provide links. We provide structured intelligence. Every article is enriched with NLP metadata, sentiment scores, and entity links.
+                </p>
+            </div>
+            <div class="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="p-8 border border-brand-white/10 hover:border-brand-accent/50 transition-colors group">
+                    <span class="font-mono text-brand-accent block mb-6 text-3xl">01</span>
+                    <h3 class="font-serif text-2xl mb-4 italic">Neural Processing</h3>
+                    <p class="text-brand-white/40 text-sm leading-relaxed">Automatic summarization and key-entity extraction for every ingest.</p>
+                </div>
+                <div class="p-8 border border-brand-white/10 hover:border-brand-accent/50 transition-colors group">
+                    <span class="font-mono text-brand-accent block mb-6 text-3xl">02</span>
+                    <h3 class="font-serif text-2xl mb-4 italic">Sub-50ms Feed</h3>
+                    <p class="text-brand-white/40 text-sm leading-relaxed">Engineered for real-time dashboards and high-frequency analysis.</p>
+                </div>
+                <div class="p-8 border border-brand-white/10 hover:border-brand-accent/50 transition-colors group">
+                    <span class="font-mono text-brand-accent block mb-6 text-3xl">03</span>
+                    <h3 class="font-serif text-2xl mb-4 italic">Source Agnostic</h3>
+                    <p class="text-brand-white/40 text-sm leading-relaxed">Normalized schema across 80,000+ publishers worldwide.</p>
+                </div>
+                <div class="p-8 border border-brand-white/10 hover:border-brand-accent/50 transition-colors group">
+                    <span class="font-mono text-brand-accent block mb-6 text-3xl">04</span>
+                    <h3 class="font-serif text-2xl mb-4 italic">VIP Webhooks</h3>
+                    <p class="text-brand-white/40 text-sm leading-relaxed">Don't poll us. We'll push to you the moment history happens.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="py-32 bg-brand-muted relative overflow-hidden">
+        <!-- Big background text -->
+        <div class="absolute -left-10 top-0 text-[20vw] font-serif italic font-black text-brand-white/5 whitespace-nowrap pointer-events-none uppercase">
+            Infrastructure
+        </div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-24">
+                <p class="font-mono text-xs uppercase tracking-[0.5em] text-brand-accent mb-4">Scalability</p>
+                <h2 class="font-serif text-6xl italic font-black">Tiered Access.</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border border-brand-white/10">
+                <template x-for="product in products" :key="product.id">
+                    <div class="p-12 border-brand-white/10 transition-all duration-500 hover:bg-brand-black group"
+                         :class="product.id === 'advance' ? 'md:border-x md:bg-brand-black/40' : ''">
+                        <div class="mb-12">
+                            <h3 x-text="product.name" class="font-serif text-3xl italic font-black mb-4 group-hover:text-brand-accent transition"></h3>
+                            <p x-text="product.description" class="text-brand-white/40 text-sm mb-8"></p>
+                            <div class="flex items-baseline gap-2">
+                                <span class="font-serif text-6xl italic font-black" x-text="'$' + product.price"></span>
+                                <span class="font-mono text-[10px] text-brand-white/30 uppercase tracking-widest">/ Month</span>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-4 mb-12 font-mono text-[11px] uppercase tracking-widest text-brand-white/60">
+                            <li class="flex items-center gap-3">
+                                <span class="w-1.5 h-1.5 bg-brand-accent"></span>
+                                <span x-text="product.quota"></span>
+                            </li>
+                            <template x-for="feature in product.features">
+                                <li class="flex items-center gap-3">
+                                    <span class="w-1.5 h-1.5 bg-brand-white/20"></span>
+                                    <span x-text="feature"></span>
+                                </li>
+                            </template>
+                        </ul>
+
+                        <button @click="buy(product)"
+                                class="w-full py-4 border border-brand-white/20 font-mono text-[10px] uppercase tracking-[0.3em] hover:bg-brand-accent hover:text-brand-black hover:border-brand-accent transition-all">
+                            Initialize Plan
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Visualization Teaser -->
+    <section class="py-32 container mx-auto px-6">
+        <div class="bg-brand-accent/5 p-12 md:p-24 border-tech relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-brand-accent/10 to-transparent pointer-events-none"></div>
+            
+            <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                    <h2 class="font-serif text-5xl italic font-black leading-tight">Visualize the pulse <br/> of the planet.</h2>
+                    <p class="text-brand-white/60 leading-relaxed font-sans">
+                        Our GraphQL endpoint allows you to query exactly what you need. From sentiment trends to geographic heatmaps, the power is yours.
+                    </p>
+                    <button class="flex items-center gap-4 group">
+                        <span class="font-mono text-xs uppercase tracking-widest group-hover:text-brand-accent transition">Request Sandbox Access</span>
+                        <div class="w-12 h-[1px] bg-brand-white/30 group-hover:w-20 group-hover:bg-brand-accent transition-all"></div>
+                    </button>
+                </div>
+                <div class="relative">
+                    <!-- Decorative API Block -->
+                    <div class="bg-brand-black border border-brand-accent/20 p-6 font-mono text-[10px] text-brand-accent/60 space-y-2 shadow-2xl">
+                        <div class="flex justify-between border-b border-brand-accent/10 pb-2 mb-4">
+                            <span>GET /v2/intelligence/stream</span>
+                            <span class="text-green-500">200 OK</span>
+                        </div>
+                        <div class="text-brand-white/80">
+                            <span class="text-purple-400">"articles":</span> [<br/>
+                            &nbsp;&nbsp;{<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"sentiment":</span> <span class="text-cyan-400">0.892</span>,<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"entities":</span> [<span class="text-orange-400">"AI"</span>, <span class="text-orange-400">"Future"</span>],<br/>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-purple-400">"relevance":</span> <span class="text-cyan-400">0.99</span><br/>
+                            &nbsp;&nbsp;}<br/>
+                            ]
+                        </div>
+                    </div>
+                    <!-- Overlapping circle -->
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 border border-brand-accent/20 rounded-full animate-float opacity-30"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-20 border-t border-brand-white/10 container mx-auto px-6">
+        <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
+            <div class="space-y-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-8 h-8 border border-brand-accent flex items-center justify-center font-mono text-xs text-brand-accent">N</div>
+                    <span class="font-serif italic text-xl font-black">NewsAPI.</span>
+                </div>
+                <p class="text-brand-white/40 text-sm max-w-xs leading-relaxed">
+                    A subsidiary of the Microservice Ecosystem group. Standardizing the world's information for the machine-age.
+                </p>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-12 md:gap-24 font-mono text-[10px] uppercase tracking-widest text-brand-white/40">
+                <div class="space-y-6">
+                    <p class="text-brand-white">Protocols</p>
+                    <ul class="space-y-4">
+                        <li><a href="#" class="hover:text-brand-accent transition">REST v2.4</a></li>
+                        <li><a href="#" class="hover:text-brand-accent transition">GraphQL</a></li>
+                        <li><a href="#" class="hover:text-brand-accent transition">Webhooks</a></li>
+                    </ul>
+                </div>
+                <div class="space-y-6">
+                    <p class="text-brand-white">Company</p>
+                    <ul class="space-y-4">
+                        <li><a href="#" class="hover:text-brand-accent transition">About</a></li>
+                        <li><a href="#" class="hover:text-brand-accent transition">Security</a></li>
+                        <li><a href="#" class="hover:text-brand-accent transition">Status</a></li>
+                    </ul>
+                </div>
+                <div class="space-y-6">
+                    <p class="text-brand-white">Legal</p>
+                    <ul class="space-y-4">
+                        <li><a href="#" class="hover:text-brand-accent transition">Privacy</a></li>
+                        <li><a href="#" class="hover:text-brand-accent transition">Terms</a></li>
+                        <li><a href="#" class="hover:text-brand-accent transition">GDPR</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-white/20">
+            <p>&copy; 2026 GLOBAL INTELLIGENCE NODE. ALL RIGHTS RESERVED.</p>
+            <div class="flex gap-8">
+                <a href="#" class="hover:text-brand-accent transition">Twitter</a>
+                <a href="#" class="hover:text-brand-accent transition">GitHub</a>
+                <a href="#" class="hover:text-brand-accent transition">Discord</a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,32 +1,17 @@
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from app.infrastructure.security.jwt_service import JoseJwtService
+from app.infrastructure.security.password_hasher import BcryptPasswordHasher
 
-from app.core.config import settings
-from jose import jwt
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_hasher = BcryptPasswordHasher()
+_jwt_service = JoseJwtService()
 
 
-def create_access_token(
-    subject: str | Any, expires_delta: timedelta | None = None
-) -> str:
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta  # noqa: UP017
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(  # noqa: UP017
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    to_encode = {"exp": expire, "sub": str(subject)}
-    encoded_jwt = jwt.encode(
-        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-    )
-    return encoded_jwt
+def create_access_token(subject, expires_delta=None):
+    return _jwt_service.create_access_token(subject, expires_delta)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password, hashed_password):
+    return _hasher.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+def get_password_hash(password):
+    return _hasher.hash(password)

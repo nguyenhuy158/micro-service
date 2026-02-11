@@ -1,7 +1,6 @@
 const GOOGLE_CLIENT_ID = window.APP_CONFIG?.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 const API_BASE_URL = window.APP_CONFIG?.API_BASE_URL || "http://localhost:8000";
 
-// Setup Toastify helper (Global scope)
 const toast = (text, type = 'info') => {
     let bg = "linear-gradient(to right, #00b09b, #96c93d)";
     if (type === 'error') bg = "linear-gradient(to right, #ff5f6d, #ffc371)";
@@ -18,7 +17,6 @@ const toast = (text, type = 'info') => {
     }).showToast();
 };
 
-// Global Translation Helper
 const t = (key) => {
     const i18n = window.Alpine?.I18n || window.AlpineI18n;
     if (i18n && typeof i18n.t === 'function') {
@@ -28,11 +26,8 @@ const t = (key) => {
 };
 
 document.addEventListener('alpine:init', () => {
-    // 1. Initialize I18n
     const i18n = window.AlpineI18n;
     if (i18n && window.messages) {
-        // Note: Alpine.plugin() is NOT needed here because the CDN version 
-        // of alpinejs-i18n registers itself automatically on alpine:initializing.
         const savedLang = JSON.parse(localStorage.getItem('app_lang')) || 'en';
         i18n.create(savedLang, window.messages);
     } else {
@@ -43,16 +38,15 @@ document.addEventListener('alpine:init', () => {
         Alpine.magic('t', () => (key) => key);
     }
 
-    // 2. Define Stores
+    registerRouter();
 
-    // UI Store (Theme, Language, Active Tab)
     Alpine.store('ui', {
         theme: Alpine.$persist('system').as('app_theme'),
         lang: Alpine.$persist('en').as('app_lang'),
-        activeTab: 'products', // products, orders
+        cartOpen: false,
+        searchExpanded: false,
 
         init() {
-            // Validate lang
             if (!['en', 'vi'].includes(this.lang)) {
                 this.lang = 'en';
             }
@@ -103,20 +97,16 @@ document.addEventListener('alpine:init', () => {
         }
     });
 
-    // Auth Store
     Alpine.store('auth', {
         token: Alpine.$persist('').as('auth_token'),
         user: Alpine.$persist(null).as('auth_user'),
-        view: 'login', // login, register
+        view: 'login',
 
         init() {
-            // Check for token in URL hash (Redirect Mode Callback)
             this.handleHashToken();
 
-            // Watch for view changes to render Google button
             Alpine.effect(() => {
                 if (!this.isAuthenticated && this.view === 'login') {
-                    // Give Alpine a moment to render the view
                     setTimeout(() => this.initGoogleAuth(), 100);
                 }
             });
@@ -128,7 +118,6 @@ document.addEventListener('alpine:init', () => {
                 const token = hash.split('=')[1];
                 if (token) {
                     this.token = token;
-                    // Clear hash without refreshing
                     window.history.replaceState(null, null, window.location.pathname);
                     this.fetchMe().then(() => {
                         toast(t('login_success'), 'success');
@@ -175,8 +164,7 @@ document.addEventListener('alpine:init', () => {
 
                 const data = await res.json();
                 this.token = data.access_token;
-                
-                // Fetch user info
+
                 await this.fetchMe();
 
                 toast(t('login_success'), 'success');
@@ -187,17 +175,9 @@ document.addEventListener('alpine:init', () => {
 
         async loginWithGoogle(idToken) {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/v1/user/auth/login/google`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id_token: idToken })
-                });
-
-                if (!res.ok) throw new Error('Google login failed');
-
-                const data = await res.json();
+                const data = await api.post('/api/v1/user/auth/login/google', { id_token: idToken });
                 this.token = data.access_token;
-                
+
                 await this.fetchMe();
                 toast(t('login_success'), 'success');
             } catch (e) {
@@ -207,17 +187,7 @@ document.addEventListener('alpine:init', () => {
 
         async register(userData) {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/v1/user/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(userData)
-                });
-
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.detail || 'Registration failed');
-                }
-
+                await api.post('/api/v1/user/auth/register', userData);
                 toast(t('register_success'), 'success');
                 this.view = 'login';
             } catch (e) {
@@ -227,16 +197,14 @@ document.addEventListener('alpine:init', () => {
 
         async fetchMe() {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/v1/user/users/me`, {
-                    headers: { 'Authorization': `Bearer ${this.token}` }
-                });
-                if (res.ok) {
-                    this.user = await res.json();
-                } else {
-                    this.logout();
-                }
+                const data = await api.get('/api/v1/user/users/me');
+                this.user = data;
             } catch (e) {
-                console.error("Fetch me error", e);
+                if (e.message === 'Unauthorized') {
+                    this.logout();
+                } else {
+                    console.error("Fetch me error", e);
+                }
             }
         },
 
@@ -247,7 +215,6 @@ document.addEventListener('alpine:init', () => {
         }
     });
 
-    // Cart Store
     Alpine.store('cart', {
         items: Alpine.$persist([]).as('cart_items'),
         loading: false,
@@ -285,24 +252,11 @@ document.addEventListener('alpine:init', () => {
                     total_amount: this.total
                 };
 
-                const res = await fetch(`${API_BASE_URL}/api/v1/order/orders/`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${auth.token}`
-                    },
-                    body: JSON.stringify(orderData)
-                });
-
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.detail || 'Checkout failed');
-                }
+                await api.post('/api/v1/order/orders/', orderData);
 
                 toast(t('checkout_success'), 'success');
                 this.clear();
-                // Switch to orders tab
-                Alpine.store('ui').activeTab = 'orders';
+                Alpine.store('router').navigate('orders');
             } catch (e) {
                 toast(t('checkout_failed') + ": " + e.message, 'error');
             } finally {
@@ -311,12 +265,224 @@ document.addEventListener('alpine:init', () => {
         }
     });
 
-    // Products Data Component
+    Alpine.store('profile', {
+        loading: false,
+        totpSetup: null,
+
+        async updateInfo(full_name, email) {
+            this.loading = true;
+            try {
+                const auth = Alpine.store('auth');
+                await api.patch('/api/v1/user/users/me', { full_name, email });
+
+                await auth.fetchMe();
+                toast(t('profile_updated'), 'success');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async changePassword(old_password, new_password) {
+            this.loading = true;
+            try {
+                await api.post('/api/v1/user/users/me/password', { old_password, new_password });
+                toast(t('password_changed'), 'success');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async uploadAvatar(file) {
+            this.loading = true;
+            try {
+                const auth = Alpine.store('auth');
+                const formData = new FormData();
+                formData.append('file', file);
+
+                await api.post('/api/v1/user/users/me/avatar', formData);
+
+                await auth.fetchMe();
+                toast(t('avatar_uploaded'), 'success');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async setupTOTP() {
+            this.loading = true;
+            try {
+                this.totpSetup = await api.post('/api/v1/user/users/me/totp/setup');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async enableTOTP(code) {
+            this.loading = true;
+            try {
+                const auth = Alpine.store('auth');
+                await api.post('/api/v1/user/users/me/totp/enable', { code, secret: this.totpSetup.secret });
+
+                this.totpSetup = null;
+                await auth.fetchMe();
+                toast(t('totp_enable_success') || 'MFA Enabled', 'success');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async disableTOTP() {
+            this.loading = true;
+            try {
+                const auth = Alpine.store('auth');
+                await api.post('/api/v1/user/users/me/totp/disable');
+
+                await auth.fetchMe();
+                toast(t('totp_disable_success') || 'MFA Disabled', 'info');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.loading = false;
+            }
+        }
+    });
+
+    Alpine.store('apiKeys', {
+        keys: [],
+        loading: false,
+
+        async fetch() {
+            this.loading = true;
+            try {
+                this.keys = await api.get('/api/v1/inventory/keys/me');
+            } catch (e) {
+                console.error("Fetch API keys error", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        copyKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                toast('API key copied to clipboard', 'success');
+            }).catch(() => {
+                toast('Failed to copy key', 'error');
+            });
+        }
+    });
+
+    Alpine.store('admin', {
+        products: [],
+        productsLoading: false,
+        categories: [],
+
+        inventory: [],
+        inventoryLoading: false,
+
+        orders: [],
+        ordersLoading: false,
+
+        async fetchProducts() {
+            this.productsLoading = true;
+            try {
+                this.products = await api.get('/api/v1/product/products/');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.productsLoading = false;
+            }
+        },
+
+        async createProduct(data) {
+            try {
+                await api.post('/api/v1/product/products', data);
+                toast('Product created', 'success');
+                await this.fetchProducts();
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        },
+
+        async fetchCategories() {
+            try {
+                this.categories = await api.get('/api/v1/product/categories');
+            } catch (e) {
+                console.error("Fetch categories error", e);
+            }
+        },
+
+        async createCategory(data) {
+            try {
+                await api.post('/api/v1/product/categories', data);
+                toast('Category created', 'success');
+                await this.fetchCategories();
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        },
+
+        async fetchInventory() {
+            this.inventoryLoading = true;
+            try {
+                this.inventory = await api.get('/api/v1/inventory/all');
+            } catch (e) {
+                toast(e.message, 'error');
+            } finally {
+                this.inventoryLoading = false;
+            }
+        },
+
+        async createInventory(data) {
+            try {
+                await api.post('/api/v1/inventory/', data);
+                toast('Inventory created', 'success');
+                await this.fetchInventory();
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        },
+
+        async fetchOrders() {
+            this.ordersLoading = true;
+            try {
+                toast('Admin order listing is not yet available', 'warning');
+            } finally {
+                this.ordersLoading = false;
+            }
+        },
+
+        async updateOrderStatus(orderId, status) {
+            try {
+                await api.patch(`/api/v1/order/orders/${orderId}`, { status });
+                toast('Order status updated', 'success');
+            } catch (e) {
+                toast(e.message, 'error');
+            }
+        }
+    });
+
     Alpine.data('products', () => ({
         list: [],
         filteredList: [],
         search: '',
         loading: false,
+        selectedProduct: null,
+        selectedCategory: '',
+        sortBy: 'newest',
+        page: 1,
+        pageSize: 12,
+        hasMore: true,
+        categories: [],
 
         async init() {
             if (window.autoAnimate && this.$refs.productList) {
@@ -325,12 +491,15 @@ document.addEventListener('alpine:init', () => {
 
             const auth = Alpine.store('auth');
             if (auth && auth.isAuthenticated) {
+                await this.fetchCategories();
                 await this.fetch();
             }
 
             this.$watch('$store.auth.token', (val) => {
-                if (val) this.fetch();
-                else {
+                if (val) {
+                    this.fetchCategories();
+                    this.fetch();
+                } else {
                     this.list = [];
                     this.filteredList = [];
                 }
@@ -339,6 +508,26 @@ document.addEventListener('alpine:init', () => {
             this.$watch('search', () => {
                 this.filter();
             });
+
+            this.$watch('selectedCategory', () => {
+                this.page = 1;
+                this.list = [];
+                this.fetch();
+            });
+
+            this.$watch('sortBy', () => {
+                this.page = 1;
+                this.list = [];
+                this.fetch();
+            });
+        },
+
+        async fetchCategories() {
+            try {
+                this.categories = await api.get('/api/v1/product/categories');
+            } catch (e) {
+                console.error("Fetch categories error", e);
+            }
         },
 
         async fetch() {
@@ -347,21 +536,38 @@ document.addEventListener('alpine:init', () => {
                 const auth = Alpine.store('auth');
                 if (!auth || !auth.token) return;
 
-                const res = await fetch(`${API_BASE_URL}/api/v1/product/products/`, {
-                    headers: { 'Authorization': `Bearer ${auth.token}` }
-                });
-
-                if (res.ok) {
-                    this.list = await res.json();
-                    this.filter();
-                } else if (res.status === 401) {
-                    auth.logout();
+                const skip = (this.page - 1) * this.pageSize;
+                let url = `/api/v1/product/products/?skip=${skip}&limit=${this.pageSize}`;
+                if (this.selectedCategory) {
+                    url += `&category_id=${this.selectedCategory}`;
                 }
+                if (this.sortBy) {
+                    url += `&sort_by=${this.sortBy}`;
+                }
+
+                const data = await api.get(url);
+                if (this.page === 1) {
+                    this.list = data;
+                } else {
+                    this.list = [...this.list, ...data];
+                }
+                this.hasMore = data.length === this.pageSize;
+                this.filter();
             } catch (e) {
-                console.error("Fetch products error", e);
+                if (e.message === 'Unauthorized') {
+                    Alpine.store('auth').logout();
+                } else {
+                    console.error("Fetch products error", e);
+                }
             } finally {
                 this.loading = false;
             }
+        },
+
+        loadMore() {
+            if (!this.hasMore || this.loading) return;
+            this.page++;
+            this.fetch();
         },
 
         filter() {
@@ -370,20 +576,19 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
             const q = this.search.toLowerCase();
-            this.filteredList = this.list.filter(p => 
-                p.name.toLowerCase().includes(q) || 
+            this.filteredList = this.list.filter(p =>
+                p.name.toLowerCase().includes(q) ||
                 p.description.toLowerCase().includes(q)
             );
         }
     }));
 
-    // Orders Data Component
     Alpine.data('orders', () => ({
         list: [],
         loading: false,
 
         async init() {
-            this.$watch('$store.ui.activeTab', (val) => {
+            this.$watch('$store.router.currentRoute', (val) => {
                 if (val === 'orders') this.fetch();
             });
         },
@@ -394,13 +599,8 @@ document.addEventListener('alpine:init', () => {
                 const auth = Alpine.store('auth');
                 if (!auth || !auth.token || !auth.user) return;
 
-                const res = await fetch(`${API_BASE_URL}/api/v1/order/orders/user/${auth.user.id}`, {
-                    headers: { 'Authorization': `Bearer ${auth.token}` }
-                });
-
-                if (res.ok) {
-                    this.list = await res.json();
-                }
+                const data = await api.get(`/api/v1/order/orders/user/${auth.user.id}`);
+                this.list = data.map(o => ({ ...o, _expanded: false }));
             } catch (e) {
                 console.error("Fetch orders error", e);
             } finally {
@@ -413,15 +613,85 @@ document.addEventListener('alpine:init', () => {
         },
 
         getStatusColor(status) {
+            const s = (status || '').toLowerCase();
             const colors = {
-                'PENDING': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-                'PAID': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-                'SHIPPED': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-                'DELIVERED': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-                'CANCELLED': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-                'FAILED': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                'paid': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                'shipped': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+                'delivered': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                'failed': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
             };
-            return colors[status] || 'bg-gray-100 text-gray-800';
+            return colors[s] || 'bg-gray-100 text-gray-800';
+        }
+    }));
+
+    Alpine.data('orderDetail', () => ({
+        order: null,
+        loading: false,
+        keys: [],
+
+        async init() {
+            this.$watch('$store.router.currentRoute', (val) => {
+                if (val === 'order-detail') {
+                    const params = Alpine.store('router').params;
+                    if (params.id) {
+                        this.fetch(params.id);
+                        this.fetchKeys(params.id);
+                    }
+                }
+            });
+
+            this.$watch('$store.router.params', (params) => {
+                if (Alpine.store('router').currentRoute === 'order-detail' && params.id) {
+                    this.fetch(params.id);
+                    this.fetchKeys(params.id);
+                }
+            });
+
+            if (Alpine.store('router').currentRoute === 'order-detail') {
+                const params = Alpine.store('router').params;
+                if (params.id) {
+                    await this.fetch(params.id);
+                    await this.fetchKeys(params.id);
+                }
+            }
+        },
+
+        async fetch(orderId) {
+            this.loading = true;
+            try {
+                this.order = await api.get(`/api/v1/order/orders/${orderId}`);
+            } catch (e) {
+                console.error("Fetch order detail error", e);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async fetchKeys(orderId) {
+            try {
+                this.keys = await api.get(`/api/v1/inventory/keys/order/${orderId}`);
+            } catch (e) {
+                console.error("Fetch order keys error", e);
+            }
+        },
+
+        formatDate(dateStr) {
+            return dayjs(dateStr).format('YYYY-MM-DD HH:mm');
+        },
+
+        getStatusColor(status) {
+            const s = (status || '').toLowerCase();
+            const colors = {
+                'pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                'paid': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                'shipped': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+                'delivered': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                'failed': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+            };
+            return colors[s] || 'bg-gray-100 text-gray-800';
         }
     }));
 });
