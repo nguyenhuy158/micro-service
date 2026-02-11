@@ -1,11 +1,12 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.create_inventory import CreateInventoryUseCase
 from app.application.use_cases.generate_api_key import GenerateApiKeyUseCase
+from app.application.use_cases.get_all_inventory import GetAllInventoryUseCase
 from app.application.use_cases.get_api_keys import GetApiKeysUseCase
 from app.application.use_cases.get_inventory import GetInventoryUseCase
 from app.application.use_cases.release_stock import ReleaseStockUseCase
@@ -17,6 +18,7 @@ from app.infrastructure.persistence.repositories.api_key_repository import (
 from app.infrastructure.persistence.repositories.inventory_repository import (
     SqlAlchemyInventoryRepository,
 )
+from app.presentation.deps import get_current_user_id
 from app.presentation.schemas.inventory import (
     ApiKeyCreate,
     InventoryCreate,
@@ -40,6 +42,25 @@ async def create_inventory(
         return await use_case.execute(db, inventory_in)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@router.get("/all", response_model=list[InventoryResponse])
+async def get_all_inventory(
+    db: AsyncSession = Depends(get_db),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+) -> Any:
+    use_case = GetAllInventoryUseCase(_inventory_repo)
+    return await use_case.execute(db, skip=skip, limit=limit)
+
+
+@router.get("/keys/me", response_model=list[ApiKeyResponse])
+async def get_my_keys(
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(get_current_user_id),
+) -> Any:
+    use_case = GetApiKeysUseCase(_api_key_repo)
+    return await use_case.get_by_user(db, user_id)
 
 
 @router.get("/{product_id}", response_model=InventoryResponse)

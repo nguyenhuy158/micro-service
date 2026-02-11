@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.use_cases.create_category import CreateCategoryUseCase
@@ -16,6 +18,7 @@ from app.infrastructure.persistence.repositories.category_repository import (
 from app.infrastructure.persistence.repositories.product_repository import (
     SqlAlchemyProductRepository,
 )
+from app.infrastructure.search.meili_client import MeiliSearchClient, get_meili_client
 from app.presentation.schemas.product import (
     Category,
     CategoryCreate,
@@ -28,20 +31,52 @@ router = APIRouter()
 
 @router.post("/products", response_model=Product, status_code=status.HTTP_201_CREATED)
 async def create_product(
-    product_in: ProductCreate, db: AsyncSession = Depends(get_db)
+    product_in: ProductCreate,
+    db: AsyncSession = Depends(get_db),
+    meili: MeiliSearchClient = Depends(get_meili_client),
 ) -> Any:
     repo = SqlAlchemyProductRepository(db)
     use_case = CreateProductUseCase(repo)
-    return await use_case.execute(product_in.model_dump())
+    product = await use_case.execute(product_in.model_dump())
+    meili.index_product(product)
+    return product
+
+
+@router.get("/products/search")
+async def search_products(
+    q: str = Query(default="", description="Search query"),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    meili: MeiliSearchClient = Depends(get_meili_client),
+) -> Any:
+    return meili.search(query=q, limit=limit, offset=offset)
 
 
 @router.get("/products", response_model=list[Product])
 async def list_products(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+    skip: int = 0,
+    limit: int = 100,
+    category_id: uuid.UUID | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    in_stock: bool | None = None,
+    sort_by: str | None = Query(
+        default=None,
+        pattern="^(price_asc|price_desc|name_asc|name_desc|newest)$",
+    ),
+    db: AsyncSession = Depends(get_db),
 ) -> Any:
     repo = SqlAlchemyProductRepository(db)
     use_case = ListProductsUseCase(repo)
-    return await use_case.execute(skip, limit)
+    return await use_case.execute(
+        skip=skip,
+        limit=limit,
+        category_id=category_id,
+        min_price=min_price,
+        max_price=max_price,
+        in_stock=in_stock,
+        sort_by=sort_by,
+    )
 
 
 @router.get("/products/{product_id}", response_model=Product)

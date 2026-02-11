@@ -17,6 +17,12 @@ class SqlAlchemyInventoryRepository(InventoryRepository):
         )
         return result.scalar_one_or_none()
 
+    async def get_all(
+        self, db: AsyncSession, skip: int = 0, limit: int = 100
+    ) -> list[Inventory]:
+        result = await db.execute(select(Inventory).offset(skip).limit(limit))
+        return list(result.scalars().all())
+
     async def create(self, db: AsyncSession, inventory: Inventory) -> Inventory:
         if not inventory.id:
             inventory.id = uuid.uuid4()

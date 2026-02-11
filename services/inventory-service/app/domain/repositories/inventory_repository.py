@@ -13,6 +13,11 @@ class InventoryRepository(ABC):
     ) -> Inventory | None: ...
 
     @abstractmethod
+    async def get_all(
+        self, db: AsyncSession, skip: int = 0, limit: int = 100
+    ) -> list[Inventory]: ...
+
+    @abstractmethod
     async def create(self, db: AsyncSession, inventory: Inventory) -> Inventory: ...
 
     @abstractmethod

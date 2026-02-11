@@ -239,6 +239,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER_INVENTORY}:${POSTGRES_PASSWORD_INVENTORY}@inventory-db/${POSTGRES_DB_INVENTORY}
       RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@rabbitmq:5672/
+      SECRET_KEY: ${SECRET_KEY}
+      USER_SERVICE_URL: http://user-service:8000
     depends_on:
       - inventory-db
       - rabbitmq

@@ -75,6 +75,8 @@
     <!-- 3. App Logic -->
     <script src="js/config.js"></script>
     <script src="js/i18n.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/router.js"></script>
     <script defer src="js/app.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
@@ -90,7 +92,7 @@
     <nav class="sticky top-0 z-50 glass border-b border-brand-border h-20">
         <div class="container mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-12">
-                <div @click="$store.ui.activeTab = 'products'" class="flex items-center gap-3 cursor-pointer group">
+                <div @click="$store.router.navigate('products')" class="flex items-center gap-3 cursor-pointer group">
                     <div class="w-8 h-8 border border-brand-accent flex items-center justify-center font-mono text-xs text-brand-accent group-hover:bg-brand-accent group-hover:text-brand-black transition-all">
                         M
                     </div>
@@ -100,20 +102,26 @@
                 <template x-if="$store.auth.isAuthenticated">
                     <div class="hidden lg:flex items-center gap-8 font-mono text-[10px] uppercase tracking-widest text-brand-white/40">
                         <button 
-                            @click="$store.ui.activeTab = 'products'" 
-                            :class="$store.ui.activeTab === 'products' ? 'text-brand-accent' : 'hover:text-brand-white'"
+                            @click="$store.router.navigate('products')" 
+                            :class="$store.router.currentRoute === 'products' ? 'text-brand-accent' : 'hover:text-brand-white'"
                             class="transition-all"
                             x-text="$t('products')">
                         </button>
                         <button 
-                            @click="$store.ui.activeTab = 'orders'" 
-                            :class="$store.ui.activeTab === 'orders' ? 'text-brand-accent' : 'hover:text-brand-white'"
+                            @click="$store.router.navigate('orders')" 
+                            :class="$store.router.currentRoute === 'orders' || $store.router.currentRoute === 'order-detail' ? 'text-brand-accent' : 'hover:text-brand-white'"
                             class="transition-all"
                             x-text="$t('my_orders')">
                         </button>
                         <button 
-                            @click="$store.ui.activeTab = 'profile'" 
-                            :class="$store.ui.activeTab === 'profile' ? 'text-brand-accent' : 'hover:text-brand-white'"
+                            @click="$store.router.navigate('api-keys')" 
+                            :class="$store.router.currentRoute === 'api-keys' ? 'text-brand-accent' : 'hover:text-brand-white'"
+                            class="transition-all"
+                            x-text="$t('api_keys')">
+                        </button>
+                        <button 
+                            @click="$store.router.navigate('profile')" 
+                            :class="$store.router.currentRoute === 'profile' ? 'text-brand-accent' : 'hover:text-brand-white'"
                             class="transition-all"
                             x-text="$t('profile')">
                         </button>
@@ -122,6 +130,14 @@
                             class="hover:text-brand-white transition-all">
                             News Protocol
                         </a>
+                        <template x-if="$store.auth.user?.role === 'admin'">
+                            <button 
+                                @click="$store.router.navigate('admin-products')" 
+                                :class="$store.router.currentRoute.startsWith('admin') ? 'text-brand-accent' : 'hover:text-brand-white'"
+                                class="transition-all"
+                                x-text="$t('admin')">
+                            </button>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -152,7 +168,7 @@
                                 <p x-text="$store.auth.user?.full_name" class="text-xs font-bold"></p>
                                 <p class="text-[9px] font-mono text-brand-accent tracking-widest uppercase">Connected</p>
                             </div>
-                            <div @click="$store.ui.activeTab = 'profile'" class="w-8 h-8 border border-brand-border overflow-hidden cursor-pointer hover:border-brand-accent transition">
+                            <div @click="$store.router.navigate('profile')" class="w-8 h-8 border border-brand-border overflow-hidden cursor-pointer hover:border-brand-accent transition">
                                 <template x-if="$store.auth.user?.avatar_url">
                                     <img :src="$store.auth.user.avatar_url.startsWith('http') ? $store.auth.user.avatar_url : API_BASE_URL + '/api/v1/user' + $store.auth.user.avatar_url" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all">
                                 </template>
@@ -171,7 +187,7 @@
                 </div>
 
                 <!-- Profile View -->
-                <div x-show="$store.ui.activeTab === 'profile'" x-data="{ 
+                <div x-show="$store.router.currentRoute === 'profile'" x-data="{ 
                     subTab: 'info',
                     infoForm: { full_name: $store.auth.user?.full_name, email: $store.auth.user?.email },
                     passForm: { old: '', new: '' },
@@ -317,10 +333,9 @@
 
                 <!-- Products View -->
 
-                <div x-show="$store.ui.activeTab === 'products'" x-data="products">
+                <div x-show="$store.router.currentRoute === 'products'" x-data="products">
                     
-                    <!-- View Header -->
-                    <div class="flex flex-col md:flex-row gap-8 items-end justify-between mb-12">
+                    <div class="flex flex-col md:flex-row gap-8 items-end justify-between mb-8">
                         <div class="space-y-2">
                             <h2 class="font-serif text-6xl italic font-black tracking-tighter" x-text="$t('products')"></h2>
                             <p class="font-mono text-[10px] uppercase tracking-[0.5em] text-brand-white/30">System Infrastructure Catalog</p>
@@ -338,7 +353,15 @@
                                 </svg>
                             </div>
                             
-                            <button @click="fetch" class="p-3 border border-brand-border hover:border-brand-accent text-brand-white/40 hover:text-brand-accent transition">
+                            <select x-model="sortBy" class="bg-brand-black border border-brand-border px-3 py-3 text-xs focus:border-brand-accent outline-none transition font-mono text-brand-white/60">
+                                <option value="newest" x-text="$t('newest')"></option>
+                                <option value="price_asc" x-text="$t('price_low_high')"></option>
+                                <option value="price_desc" x-text="$t('price_high_low')"></option>
+                                <option value="name_asc" x-text="$t('name_a_z')"></option>
+                                <option value="name_desc" x-text="$t('name_z_a')"></option>
+                            </select>
+
+                            <button @click="page = 1; list = []; fetch()" class="p-3 border border-brand-border hover:border-brand-accent text-brand-white/40 hover:text-brand-accent transition">
                                 <span :class="loading ? 'animate-spin' : ''" class="block">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -346,6 +369,21 @@
                                 </span>
                             </button>
                         </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <button @click="selectedCategory = ''" 
+                            :class="selectedCategory === '' ? 'bg-brand-accent text-brand-black' : 'border-brand-border text-brand-white/40 hover:border-brand-accent hover:text-brand-accent'"
+                            class="px-4 py-2 border text-[10px] font-mono uppercase tracking-widest transition"
+                            x-text="$t('all_categories')">
+                        </button>
+                        <template x-for="cat in categories" :key="cat.id">
+                            <button @click="selectedCategory = cat.id"
+                                :class="selectedCategory === cat.id ? 'bg-brand-accent text-brand-black' : 'border-brand-border text-brand-white/40 hover:border-brand-accent hover:text-brand-accent'"
+                                class="px-4 py-2 border text-[10px] font-mono uppercase tracking-widest transition"
+                                x-text="cat.name">
+                            </button>
+                        </template>
                     </div>
 
                     <!-- Products Grid -->
@@ -384,6 +422,14 @@
 
                     <div x-show="!loading && filteredList.length === 0" class="text-center py-32 border border-brand-border border-dashed">
                         <p class="font-serif text-2xl italic text-brand-white/30" x-text="$t('no_products')"></p>
+                    </div>
+
+                    <div x-show="hasMore && filteredList.length > 0" class="text-center mt-8">
+                        <button @click="loadMore()" :disabled="loading"
+                            class="px-12 py-4 border border-brand-border font-mono text-[10px] uppercase tracking-widest text-brand-white/40 hover:border-brand-accent hover:text-brand-accent transition disabled:opacity-30">
+                            <span x-show="!loading" x-text="$t('load_more')"></span>
+                            <span x-show="loading" class="animate-spin inline-block">↻</span>
+                        </button>
                     </div>
 
                     <!-- Product Modal -->
@@ -428,7 +474,7 @@
                 </div>
 
                 <!-- Orders View -->
-                <div x-show="$store.ui.activeTab === 'orders'" x-data="orders" class="max-w-6xl mx-auto">
+                <div x-show="$store.router.currentRoute === 'orders'" x-data="orders" class="max-w-6xl mx-auto">
                     <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
                         <div class="space-y-2">
                             <h2 class="font-serif text-6xl italic font-black tracking-tighter" x-text="$t('my_orders')"></h2>
@@ -446,7 +492,7 @@
 
                     <div class="space-y-px bg-brand-border border border-brand-border" x-auto-animate>
                         <template x-for="order in list" :key="order.id">
-                            <div class="bg-brand-black hover:bg-brand-muted/20 transition-all group overflow-hidden">
+                            <div class="bg-brand-black hover:bg-brand-muted/20 transition-all group overflow-hidden cursor-pointer" @click="$store.router.navigate('order-detail', { id: order.id })">
                                 <div class="p-8">
                                     <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-10">
                                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 flex-grow">
@@ -468,14 +514,21 @@
                                             </div>
                                         </div>
 
-                                        <button @click="order._expanded = !order._expanded" class="w-10 h-10 border border-brand-border flex items-center justify-center hover:border-brand-accent hover:text-brand-accent transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" :class="order._expanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                            </svg>
-                                        </button>
+                                        <div class="flex items-center gap-4">
+                                            <button @click.stop="order._expanded = !order._expanded" class="w-10 h-10 border border-brand-border flex items-center justify-center hover:border-brand-accent hover:text-brand-accent transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-300" :class="order._expanded ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </button>
+                                            <button @click.stop="$store.router.navigate('order-detail', { id: order.id })" class="w-10 h-10 border border-brand-border flex items-center justify-center hover:border-brand-accent hover:text-brand-accent transition">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div x-show="order._expanded" x-collapse x-cloak>
+                                    <div x-show="order._expanded" x-collapse x-cloak @click.stop>
                                         <div class="mt-8 pt-8 border-t border-brand-border">
                                             <table class="w-full font-mono text-[9px] uppercase tracking-widest">
                                                 <thead>
@@ -503,10 +556,341 @@
 
                         <div x-show="!loading && list.length === 0" class="text-center py-32 bg-brand-black">
                             <p class="font-serif text-2xl italic text-brand-white/30" x-text="$t('no_orders')"></p>
-                            <button @click="$store.ui.activeTab = 'products'" class="mt-8 font-mono text-[10px] uppercase tracking-widest text-brand-accent border-b border-brand-accent pb-1">Initialize First Request</button>
+                            <button @click="$store.router.navigate('products')" class="mt-8 font-mono text-[10px] uppercase tracking-widest text-brand-accent border-b border-brand-accent pb-1">Initialize First Request</button>
                         </div>
                     </div>
                 </div>
+
+                <!-- Order Detail View -->
+                <div x-show="$store.router.currentRoute === 'order-detail'" x-data="orderDetail" class="max-w-6xl mx-auto">
+                    <button @click="$store.router.navigate('orders')" class="flex items-center gap-2 mb-12 font-mono text-[10px] uppercase tracking-widest text-brand-white/40 hover:text-brand-accent transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        <span x-text="$t('back_to_orders')"></span>
+                    </button>
+
+                    <template x-if="loading">
+                        <div class="text-center py-32">
+                            <span class="animate-spin inline-block text-4xl text-brand-accent">↻</span>
+                        </div>
+                    </template>
+
+                    <template x-if="!loading && order">
+                        <div class="space-y-12">
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-8">
+                                <div class="space-y-2">
+                                    <h2 class="font-serif text-6xl italic font-black tracking-tighter" x-text="$t('order_detail')"></h2>
+                                    <p class="font-mono text-[10px] uppercase tracking-[0.5em] text-brand-white/30" x-text="'TX: ' + order.id.substring(0,16).toUpperCase()"></p>
+                                </div>
+                                <span :class="getStatusColor(order.status)" class="text-xs font-bold uppercase tracking-widest px-4 py-2 border border-current" x-text="order.status"></span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div class="bg-brand-muted/20 border border-brand-border p-8 space-y-2">
+                                    <p class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest" x-text="$t('order_id_label')"></p>
+                                    <p class="font-mono text-sm font-bold" x-text="order.id"></p>
+                                </div>
+                                <div class="bg-brand-muted/20 border border-brand-border p-8 space-y-2">
+                                    <p class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest" x-text="$t('created_at')"></p>
+                                    <p class="text-sm font-medium" x-text="formatDate(order.created_at)"></p>
+                                </div>
+                                <div class="bg-brand-muted/20 border border-brand-border p-8 space-y-2">
+                                    <p class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest" x-text="$t('order_total')"></p>
+                                    <p class="font-serif text-4xl italic font-black text-brand-accent" x-text="'$' + order.total_amount.toFixed(2)"></p>
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-muted/20 border border-brand-border p-8">
+                                <h3 class="font-serif text-2xl italic font-black mb-8" x-text="$t('order_items')"></h3>
+                                <table class="w-full font-mono text-[9px] uppercase tracking-widest">
+                                    <thead>
+                                        <tr class="text-brand-white/20 text-left border-b border-brand-border">
+                                            <th class="pb-4 font-normal" x-text="$t('product_name')"></th>
+                                            <th class="pb-4 font-normal" x-text="$t('quantity')"></th>
+                                            <th class="pb-4 font-normal text-right" x-text="$t('unit_price')"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-brand-border">
+                                        <template x-for="item in order.items" :key="item.product_id">
+                                            <tr>
+                                                <td class="py-4" x-text="'ID: ' + item.product_id.substring(0,12)"></td>
+                                                <td class="py-4" x-text="item.quantity + 'x'"></td>
+                                                <td class="py-4 text-right font-bold text-brand-accent" x-text="'$' + item.price"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="bg-brand-muted/20 border border-brand-border p-8">
+                                <h3 class="font-serif text-2xl italic font-black mb-8" x-text="$t('associated_keys')"></h3>
+                                <template x-if="keys.length > 0">
+                                    <div class="space-y-4">
+                                        <template x-for="key in keys" :key="key.id">
+                                            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-6 bg-brand-black border border-brand-border">
+                                                <div class="flex-grow space-y-2">
+                                                    <div class="flex items-center gap-3">
+                                                        <code class="font-mono text-xs text-brand-accent" x-text="key.key.substring(0, 24) + '...'"></code>
+                                                        <button @click="navigator.clipboard.writeText(key.key); toast($t('key_copied'), 'success')" class="text-brand-white/30 hover:text-brand-accent transition">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="flex gap-6 font-mono text-[9px] uppercase tracking-widest text-brand-white/40">
+                                                        <span x-text="$t('quota') + ': ' + key.quota_used + '/' + key.quota_limit"></span>
+                                                        <span x-text="$t('rate_limit') + ': ' + key.rate_limit + '/min'"></span>
+                                                    </div>
+                                                </div>
+                                                <span :class="key.is_active ? 'text-brand-accent' : 'text-red-500'" class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 border border-current" x-text="key.is_active ? $t('active') : $t('inactive')"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template x-if="keys.length === 0">
+                                    <p class="text-center py-8 font-mono text-[10px] uppercase tracking-widest text-brand-white/30" x-text="$t('no_associated_keys')"></p>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- API Keys View -->
+                <div x-show="$store.router.currentRoute === 'api-keys'" x-data="{ init() { $store.apiKeys.fetch(); } }" class="max-w-6xl mx-auto">
+                    <div class="mb-16 space-y-2">
+                        <h2 class="font-serif text-6xl italic font-black tracking-tighter" x-text="$t('api_keys')"></h2>
+                        <p class="font-mono text-[10px] uppercase tracking-[0.5em] text-brand-white/30" x-text="$t('api_keys_subtitle')"></p>
+                    </div>
+
+                    <template x-if="$store.apiKeys.loading">
+                        <div class="text-center py-32">
+                            <span class="animate-spin inline-block text-4xl text-brand-accent">↻</span>
+                        </div>
+                    </template>
+
+                    <template x-if="!$store.apiKeys.loading && $store.apiKeys.keys.length === 0">
+                        <div class="text-center py-32 border border-brand-border border-dashed">
+                            <p class="font-serif text-2xl italic text-brand-white/30" x-text="$t('no_keys')"></p>
+                            <button @click="$store.router.navigate('products')" class="mt-8 font-mono text-[10px] uppercase tracking-widest text-brand-accent border-b border-brand-accent pb-1">Browse Infrastructure</button>
+                        </div>
+                    </template>
+
+                    <template x-if="!$store.apiKeys.loading && $store.apiKeys.keys.length > 0">
+                        <div class="space-y-4">
+                            <template x-for="key in $store.apiKeys.keys" :key="key.id">
+                                <div class="bg-brand-muted/20 border border-brand-border p-8 hover:border-brand-accent/30 transition group">
+                                    <div class="flex flex-col lg:flex-row justify-between gap-6">
+                                        <div class="flex-grow space-y-4">
+                                            <div class="flex items-center gap-4">
+                                                <code class="font-mono text-sm text-brand-accent bg-brand-black px-4 py-2 border border-brand-border" x-text="key.key.substring(0, 32) + '...'"></code>
+                                                <button @click="$store.apiKeys.copyKey(key.key)" class="text-brand-white/30 hover:text-brand-accent transition">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                    </svg>
+                                                </button>
+                                                <span :class="key.is_active ? 'text-brand-accent' : 'text-red-500'" class="text-[9px] font-bold uppercase tracking-widest px-2 py-1 border border-current" x-text="key.is_active ? $t('active') : $t('inactive')"></span>
+                                            </div>
+
+                                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 font-mono text-[9px] uppercase tracking-widest">
+                                                <div>
+                                                    <p class="text-brand-white/20 mb-1" x-text="$t('quota')"></p>
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-grow h-1 bg-brand-border">
+                                                            <div class="h-full bg-brand-accent" :style="'width: ' + Math.min(100, (key.quota_used / key.quota_limit) * 100) + '%'"></div>
+                                                        </div>
+                                                        <span class="text-brand-white/60" x-text="key.quota_used + '/' + key.quota_limit"></span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p class="text-brand-white/20 mb-1" x-text="$t('rate_limit')"></p>
+                                                    <p class="text-brand-white/60" x-text="key.rate_limit + ' req/min'"></p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-brand-white/20 mb-1">Product</p>
+                                                    <p class="text-brand-white/60" x-text="key.product_id.substring(0, 8)"></p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-brand-white/20 mb-1">Order</p>
+                                                    <button @click="$store.router.navigate('order-detail', { id: key.order_id })" class="text-brand-accent hover:underline" x-text="key.order_id.substring(0, 8)"></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Admin Views -->
+                <template x-if="$store.auth.user?.role === 'admin' && $store.router.currentRoute.startsWith('admin')">
+                    <div class="max-w-7xl mx-auto">
+                        <div class="mb-12 space-y-2">
+                            <h2 class="font-serif text-6xl italic font-black tracking-tighter" x-text="$t('admin')"></h2>
+                            <p class="font-mono text-[10px] uppercase tracking-[0.5em] text-brand-white/30">System Administration Console</p>
+                        </div>
+
+                        <div class="flex gap-8 font-mono text-[10px] uppercase tracking-widest text-brand-white/40 border-b border-brand-border mb-12">
+                            <button @click="$store.router.navigate('admin-products')" :class="$store.router.currentRoute === 'admin-products' ? 'text-brand-accent border-b-2 border-brand-accent' : ''" class="pb-4 transition" x-text="$t('admin_products')"></button>
+                            <button @click="$store.router.navigate('admin-orders')" :class="$store.router.currentRoute === 'admin-orders' ? 'text-brand-accent border-b-2 border-brand-accent' : ''" class="pb-4 transition" x-text="$t('admin_orders')"></button>
+                            <button @click="$store.router.navigate('admin-inventory')" :class="$store.router.currentRoute === 'admin-inventory' ? 'text-brand-accent border-b-2 border-brand-accent' : ''" class="pb-4 transition" x-text="$t('admin_inventory')"></button>
+                        </div>
+
+                        <!-- Admin Products -->
+                        <div x-show="$store.router.currentRoute === 'admin-products'" x-data="{ 
+                            newProduct: { name: '', description: '', price: 0, stock: 0, category_id: '' },
+                            newCategory: { name: '', description: '' },
+                            showCreateProduct: false,
+                            showCreateCategory: false,
+                            init() { $store.admin.fetchProducts(); $store.admin.fetchCategories(); }
+                        }">
+                            <div class="flex gap-4 mb-8">
+                                <button @click="showCreateProduct = !showCreateProduct" class="px-6 py-3 border border-brand-accent text-brand-accent font-mono text-[10px] uppercase tracking-widest hover:bg-brand-accent hover:text-brand-black transition" x-text="$t('create_product')"></button>
+                                <button @click="showCreateCategory = !showCreateCategory" class="px-6 py-3 border border-brand-border text-brand-white/40 font-mono text-[10px] uppercase tracking-widest hover:border-brand-accent hover:text-brand-accent transition" x-text="$t('create_category')"></button>
+                            </div>
+
+                            <div x-show="showCreateProduct" x-collapse class="bg-brand-muted/20 border border-brand-border p-8 mb-8">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('name')"></label>
+                                        <input x-model="newProduct.name" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('price')"></label>
+                                        <input x-model.number="newProduct.price" type="number" step="0.01" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('stock')"></label>
+                                        <input x-model.number="newProduct.stock" type="number" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('description')"></label>
+                                        <input x-model="newProduct.description" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('category')"></label>
+                                        <select x-model="newProduct.category_id" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                            <option value="">—</option>
+                                            <template x-for="cat in $store.admin.categories" :key="cat.id">
+                                                <option :value="cat.id" x-text="cat.name"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button @click="$store.admin.createProduct(newProduct); newProduct = { name: '', description: '', price: 0, stock: 0, category_id: '' }; showCreateProduct = false"
+                                    class="mt-6 bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 px-8 text-[10px] hover:bg-brand-accent transition" x-text="$t('create_product')"></button>
+                            </div>
+
+                            <div x-show="showCreateCategory" x-collapse class="bg-brand-muted/20 border border-brand-border p-8 mb-8">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('name')"></label>
+                                        <input x-model="newCategory.name" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('description')"></label>
+                                        <input x-model="newCategory.description" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                </div>
+                                <button @click="$store.admin.createCategory(newCategory); newCategory = { name: '', description: '' }; showCreateCategory = false"
+                                    class="mt-6 bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 px-8 text-[10px] hover:bg-brand-accent transition" x-text="$t('create_category')"></button>
+                            </div>
+
+                            <div class="border border-brand-border overflow-hidden">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="font-mono text-[9px] uppercase tracking-widest text-brand-white/20 text-left bg-brand-muted/30">
+                                            <th class="p-4 font-normal" x-text="$t('name')"></th>
+                                            <th class="p-4 font-normal" x-text="$t('price')"></th>
+                                            <th class="p-4 font-normal" x-text="$t('stock')"></th>
+                                            <th class="p-4 font-normal" x-text="$t('category')"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-brand-border">
+                                        <template x-for="product in $store.admin.products" :key="product.id">
+                                            <tr class="hover:bg-brand-muted/20 transition text-sm">
+                                                <td class="p-4 font-bold" x-text="product.name"></td>
+                                                <td class="p-4 font-mono text-brand-accent" x-text="'$' + product.price"></td>
+                                                <td class="p-4 font-mono" :class="product.stock < 5 ? 'text-red-500' : 'text-brand-white/60'" x-text="product.stock"></td>
+                                                <td class="p-4 font-mono text-[10px] text-brand-white/40" x-text="product.category_id ? product.category_id.substring(0,8) : '—'"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                <div x-show="$store.admin.products.length === 0" class="text-center py-16">
+                                    <p class="font-mono text-[10px] uppercase tracking-widest text-brand-white/30">No products found</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Admin Orders -->
+                        <div x-show="$store.router.currentRoute === 'admin-orders'" x-data="{ searchId: '', searchResult: null }">
+                            <div class="bg-brand-muted/20 border border-brand-border p-8 mb-8">
+                                <h3 class="font-serif text-2xl italic font-black mb-6">Search Order by ID</h3>
+                                <div class="flex gap-4">
+                                    <input x-model="searchId" type="text" placeholder="Order UUID" class="flex-grow bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition font-mono">
+                                    <button @click="$store.router.navigate('order-detail', { id: searchId })" class="px-8 py-3 bg-brand-white text-brand-black font-black uppercase tracking-widest text-[10px] hover:bg-brand-accent transition">View</button>
+                                </div>
+                            </div>
+                            <div class="text-center py-16 border border-brand-border border-dashed">
+                                <p class="font-mono text-[10px] uppercase tracking-widest text-brand-white/30">Full order management coming soon</p>
+                            </div>
+                        </div>
+
+                        <!-- Admin Inventory -->
+                        <div x-show="$store.router.currentRoute === 'admin-inventory'" x-data="{
+                            newInventory: { product_id: '', quantity: 0 },
+                            showCreate: false,
+                            init() { $store.admin.fetchInventory(); }
+                        }">
+                            <button @click="showCreate = !showCreate" class="px-6 py-3 border border-brand-accent text-brand-accent font-mono text-[10px] uppercase tracking-widest hover:bg-brand-accent hover:text-brand-black transition mb-8">Add Inventory</button>
+
+                            <div x-show="showCreate" x-collapse class="bg-brand-muted/20 border border-brand-border p-8 mb-8">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2">Product ID</label>
+                                        <input x-model="newInventory.product_id" type="text" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition font-mono">
+                                    </div>
+                                    <div>
+                                        <label class="font-mono text-[9px] text-brand-white/40 uppercase tracking-widest block mb-2" x-text="$t('quantity')"></label>
+                                        <input x-model.number="newInventory.quantity" type="number" class="w-full bg-brand-black border border-brand-border px-4 py-3 text-sm focus:border-brand-accent outline-none transition">
+                                    </div>
+                                </div>
+                                <button @click="$store.admin.createInventory(newInventory); newInventory = { product_id: '', quantity: 0 }; showCreate = false"
+                                    class="mt-6 bg-brand-white text-brand-black font-black uppercase tracking-widest py-4 px-8 text-[10px] hover:bg-brand-accent transition">Create</button>
+                            </div>
+
+                            <div class="border border-brand-border overflow-hidden">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="font-mono text-[9px] uppercase tracking-widest text-brand-white/20 text-left bg-brand-muted/30">
+                                            <th class="p-4 font-normal">Product ID</th>
+                                            <th class="p-4 font-normal" x-text="$t('quantity')"></th>
+                                            <th class="p-4 font-normal">Reserved</th>
+                                            <th class="p-4 font-normal" x-text="$t('key_status')"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-brand-border">
+                                        <template x-for="inv in $store.admin.inventory" :key="inv.product_id">
+                                            <tr class="hover:bg-brand-muted/20 transition text-sm">
+                                                <td class="p-4 font-mono text-xs" x-text="inv.product_id.substring(0,12)"></td>
+                                                <td class="p-4 font-mono" x-text="inv.quantity"></td>
+                                                <td class="p-4 font-mono" x-text="inv.reserved || 0"></td>
+                                                <td class="p-4">
+                                                    <span :class="inv.quantity > 0 ? 'text-brand-accent' : 'text-red-500'" class="text-[9px] font-bold uppercase tracking-widest" x-text="inv.quantity > 0 ? 'In Stock' : 'Out of Stock'"></span>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                                <div x-show="$store.admin.inventory.length === 0" class="text-center py-16">
+                                    <p class="font-mono text-[10px] uppercase tracking-widest text-brand-white/30">No inventory records</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
             </div>
         </template>
